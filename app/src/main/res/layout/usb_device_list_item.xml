@@ -10,8 +10,10 @@
             android:padding="16dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            tools:text="TestDevice"
             android:textSize="20sp"
-            tools:text="TestDevice"/>
+            android:textColor="@android:color/black"
+            android:background="#BBffffff"/>
 
     <!--Line separator-->
     <View

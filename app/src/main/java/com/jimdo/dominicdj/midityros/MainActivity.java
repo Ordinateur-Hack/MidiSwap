@@ -1,16 +1,16 @@
 package com.jimdo.dominicdj.midityros;
 
 import Usb.UsbCommunicationManager;
+import android.app.Activity;
 import android.content.Intent;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity implements UsbDevicesAdapter.UsbDeviceOnClickHandler {
+public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDeviceOnClickHandler {
 
     private static UsbCommunicationManager usbCommunicationManager;
     private RecyclerView usbDeviceRecyclerView;

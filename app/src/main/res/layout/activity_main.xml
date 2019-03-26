@@ -1,27 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+    <ImageView
+            android:id="@+id/photo_keyboard"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/keyboard_side"
+            android:scaleType="center"
+            android:alpha="0.7"/>
+
     <TextView
-            android:id="@+id/textView"
+            android:id="@+id/text_top"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="50dp"
+            android:text="@string/app_name"
+            android:textSize="60sp"
+            android:textStyle="italic"
+            android:textColor="@android:color/white"/>
+
+    <LinearLayout
             android:layout_width="match_parent"
-            android:padding="16dp"
-            android:text="@string/select_device"
-            android:textSize="16dp"
-            android:textAlignment="center">
+            android:layout_height="match_parent"
+            android:layout_below="@id/text_top"
+            android:layout_marginTop="35dp"
+            android:orientation="vertical">
 
-    </TextView>
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:text="@string/select_device"
+                android:textSize="17sp"
+                android:textAlignment="center"
+                android:textColor="@android:color/white"/>
 
-    <android.support.v7.widget.RecyclerView
-            android:id="@+id/recyclerview_usb_device_list"
-            android:layout_below="@id/textView"
+        <android.support.v7.widget.RecyclerView
+                android:id="@+id/recyclerview_usb_device_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="8dp">
+
+        </android.support.v7.widget.RecyclerView>
+
+    </LinearLayout>
+
+    <!--<LinearLayout
+            android:id="@+id/bottom_bar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:orientation="vertical"
+            android:background="#AAffffff">
 
-    </android.support.v7.widget.RecyclerView>
+        <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_above="@id/btn_next"
+                android:alpha=".5"
+                android:background="@android:color/black"/>
+
+        <Button
+                android:id="@+id/btn_next"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:background="@null"
+                android:text="@string/start"
+                android:textColor="@android:color/black"/>
+
+    </LinearLayout>-->
 
 </RelativeLayout>
