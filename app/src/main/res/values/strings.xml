@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MidiTyros</string>
+    <string name="select_device">Please select a MIDI device</string>
+</resources>
