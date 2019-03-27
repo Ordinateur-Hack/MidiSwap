@@ -12,6 +12,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -26,20 +27,28 @@ public class UsbCommunicationManager {
     private UsbManager usbManager;
     private UsbDevice usbDevice;
     private UsbInterface intf;
-    private UsbEndpoint receiveEndpoint, sendEndpoint; // receiveEndpoint: from device to android; sendEndpoint: from
-    // android to device
+    // // receiveEndpoint: from device to android; sendEndpoint: from android to device
+    private UsbEndpoint receiveEndpoint, sendEndpoint;
     private UsbDeviceConnection connection;
 
     private PendingIntent usbPermissionIntent;
     private Context context;
-    private boolean isReceiverRegistered = false;
 
     private Timer recvTimer;
+    private MidiUsbRequest midiUsbRequest;
     private RecvBuffer recvBuffer;
 
     private static final String TAG = UsbCommunicationManager.class.getSimpleName();
 
-    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
+    private final UsbDevicesListener usbDevicesListener;
+
+    public interface UsbDevicesListener {
+        void appendItem(UsbDevice newDevice);
+
+        void deleteItem(UsbDevice newDevice);
+    }
+
+    private final BroadcastReceiver usbPermissionReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(ACTION_USB_PERMISSION)) {
@@ -51,7 +60,6 @@ public class UsbCommunicationManager {
                             connection = usbManager.openDevice(usbDevice);
                             connection.claimInterface(intf, forceClaim);
                         }
-
                     }
                 } else {
                     Log.d(TAG, "Permission denied for device " + device);
@@ -60,34 +68,49 @@ public class UsbCommunicationManager {
         }
     };
 
-    private final BroadcastReceiver detachReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_DETACHED)) {
-                Log.d(TAG, "USB device detached.");
-                Toast.makeText(context, "MIDIDevice detached...", Toast.LENGTH_SHORT).show();
-                UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                if (device != null) {
-                    releaseUsb();
+            String action = intent.getAction();
+            if (action.equals(UsbManager.ACTION_USB_DEVICE_ATTACHED) ||
+                    action.equals(UsbManager.ACTION_USB_DEVICE_DETACHED)) {
+                UsbDevice newDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+
+                switch (action) {
+                    case UsbManager.ACTION_USB_DEVICE_ATTACHED:
+                        Log.d(TAG, "USB device attached.");
+                        Toast.makeText(context, "USB device attached", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, "New device to attach: " + newDevice);
+                        if (newDevice != null) {
+                            usbDevicesListener.appendItem(newDevice);
+                        }
+                        break;
+                    case UsbManager.ACTION_USB_DEVICE_DETACHED:
+                        Log.d(TAG, "USB device detached." + newDevice);
+                        Toast.makeText(context, "USB device detached", Toast.LENGTH_SHORT).show();
+                        if (newDevice != null) {
+                            usbDevicesListener.deleteItem(newDevice);
+                        }
+                        break;
                 }
             }
         }
     };
 
-    public UsbCommunicationManager(Context context) {
+    public UsbCommunicationManager(Context context, UsbDevicesListener usbDevicesListener) {
         this.context = context;
         usbManager = (UsbManager) context.getSystemService(context.USB_SERVICE);
+
+        this.usbDevicesListener = usbDevicesListener;
 
         // needed to later on ask permission from user to use the usb device
         usbPermissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
 
-        context.registerReceiver(detachReceiver, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
-        if (!isReceiverRegistered) {
-            context.registerReceiver(usbReceiver, new IntentFilter(ACTION_USB_PERMISSION));
-            isReceiverRegistered = true;
-        }
-
-        recvTimer = new Timer();
+        IntentFilter usbFilter = new IntentFilter();
+        usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+        usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        context.registerReceiver(usbReceiver, usbFilter);
+        context.registerReceiver(usbPermissionReceiver, new IntentFilter(ACTION_USB_PERMISSION));
     }
 
     public void createRecvBuffer(RecvBuffer.BufferChangeListener changeListener) {
@@ -110,10 +133,8 @@ public class UsbCommunicationManager {
         return devicesVendors;
     }
 
-    public String[] getDevicesInfo(UsbDevice[] usbDevices) {
-        // TODO: add listener for when device is attached/detached
-
-        String[] devicesInfo = new String[usbDevices.length];
+    public ArrayList<String> getDevicesInfo(UsbDevice[] usbDevices) {
+        ArrayList<String> devicesInfo = new ArrayList<>();
         int i = 0;
         for (UsbDevice usbDevice : usbDevices) {
             // TODO: parse values, see http://www.linux-usb.org/usb.ids and https://stackoverflow
@@ -122,10 +143,17 @@ public class UsbCommunicationManager {
             buffer.append(" ");
             buffer.append(usbDevice.getProductId());
 
-            devicesInfo[i++] = buffer.toString();
+            devicesInfo.add(i++, buffer.toString());
         }
 
         return devicesInfo;
+    }
+
+    public String getDeviceInfo(UsbDevice usbDevice) {
+        UsbDevice[] oneUsbDevice = new UsbDevice[1];
+        oneUsbDevice[0] = usbDevice;
+        ArrayList<String> oneUsbDeviceRepresentation = getDevicesInfo(oneUsbDevice);
+        return oneUsbDeviceRepresentation.get(0);
     }
 
     public UsbDevice[] getAvailableDevices() {
@@ -193,15 +221,20 @@ public class UsbCommunicationManager {
     }
 
     public void releaseUsb() {
-        if (isReceiverRegistered) {
-            context.unregisterReceiver(usbReceiver);
-            isReceiverRegistered = false;
-        }
-        if (intf != null && connection != null) {
-            connection.releaseInterface(intf);
+        context.unregisterReceiver(usbReceiver);
+        context.unregisterReceiver(usbPermissionReceiver);
+        if (connection != null) {
             connection.close();
+            if (intf != null) {
+                connection.releaseInterface(intf); // TODO: really necessary if connection already closed?
+            }
         }
-        recvTimer.cancel();
+        if (recvTimer != null) {
+            recvTimer.cancel();
+        }
+        if (midiUsbRequest != null) {
+            midiUsbRequest.cancel();
+        }
         Log.d(TAG, "Connection successfully closed");
     }
 
@@ -231,7 +264,6 @@ public class UsbCommunicationManager {
         return true;
     }
 
-
     public boolean startReceive() {
         if (!isConnectionProperlySetUp()) {
 //            Log.d(TAG, "In receive, but connection not properly set up ;-(");
@@ -246,32 +278,9 @@ public class UsbCommunicationManager {
 
         // maybe helpful:
         // https://stackoverflow.com/questions/12345953/android-usb-host-asynchronous-interrupt-transfer
-        class MidiUsbRequest extends TimerTask {
-            @Override
-            public void run() {
-                // TODO: if recvBuffer == null
-
-                ByteBuffer buffer = ByteBuffer.allocate(512);
-                UsbRequest request = new UsbRequest();
-                request.initialize(connection, receiveEndpoint);
-
-                // queue an inbound request on the bulk transfer endpoint
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    request.queue(buffer); // TODO: replace with new api
-                } else {
-                    request.queue(buffer, 512);
-                }
-                // wait for event (confirmation that request was completed)
-                if (connection.requestWait() == request) {
-                    recvBuffer.setBuffer(buffer);
-                    Log.d(TAG, "USB request successfully completed.");
-                } else {
-                    Log.d(TAG, "requestWait failed!");
-                }
-            }
-        }
-
-        recvTimer.schedule(new MidiUsbRequest(), 0, 10); // TODO: maybe adjust this value
+        midiUsbRequest = new MidiUsbRequest();
+        recvTimer = new Timer();
+        recvTimer.schedule(midiUsbRequest, 0, 10); // TODO: maybe adjust this value
 
         // =================================
         // OLD
@@ -299,6 +308,34 @@ public class UsbCommunicationManager {
         // return String.valueOf(recvBytes);*/
 
         return true;
+    }
+
+    class MidiUsbRequest extends TimerTask {
+        @Override
+        public void run() {
+            if (recvBuffer == null) {
+                Log.d(TAG, "No receive buffer set, will not receive any data");
+                return;
+            }
+
+            ByteBuffer buffer = ByteBuffer.allocate(512);
+            UsbRequest request = new UsbRequest();
+            request.initialize(connection, receiveEndpoint);
+
+            // queue an inbound request on the bulk transfer endpoint
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                request.queue(buffer);
+            } else {
+                request.queue(buffer, 512);
+            }
+            // wait for event (confirmation that request was completed)
+            if (connection.requestWait() == request) {
+                recvBuffer.updateBuffer(buffer);
+                Log.d(TAG, "USB request successfully completed.");
+            } else {
+                Log.d(TAG, "requestWait failed!");
+            }
+        }
     }
 
 }

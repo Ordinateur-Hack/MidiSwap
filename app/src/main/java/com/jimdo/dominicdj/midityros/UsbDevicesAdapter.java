@@ -7,17 +7,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+
 public class UsbDevicesAdapter extends RecyclerView.Adapter<UsbDevicesAdapter.UsbDevicesViewHolder> {
 
-    private String[] deviceInfoList;
+    private ArrayList<String> deviceInfoList;
     private final UsbDeviceOnClickHandler usbDeviceOnClickHandler;
 
-    interface UsbDeviceOnClickHandler {
+    public interface UsbDeviceOnClickHandler {
         void onClickDevice(int adapterPosition);
     }
 
 
-    public UsbDevicesAdapter(String[] deviceInfoList, UsbDeviceOnClickHandler usbDeviceOnClickHandler) {
+    public UsbDevicesAdapter(ArrayList<String> deviceInfoList, UsbDeviceOnClickHandler usbDeviceOnClickHandler) {
         this.deviceInfoList = deviceInfoList;
         this.usbDeviceOnClickHandler = usbDeviceOnClickHandler;
     }
@@ -47,11 +49,26 @@ public class UsbDevicesAdapter extends RecyclerView.Adapter<UsbDevicesAdapter.Us
 
     @Override
     public void onBindViewHolder(@NonNull UsbDevicesViewHolder usbDevicesViewHolder, int position) {
-        usbDevicesViewHolder.usbDeviceInfo.setText(deviceInfoList[position]);
+        usbDevicesViewHolder.usbDeviceInfo.setText(deviceInfoList.get(position));
     }
 
     @Override
     public int getItemCount() {
-        return deviceInfoList.length;
+        return deviceInfoList.size();
     }
+
+    public void appendItem (String deviceInfo) {
+        deviceInfoList.add(deviceInfo);
+        notifyItemInserted(getItemCount() - 1);
+    }
+
+    public void deleteItem(int index) {
+        deviceInfoList.remove(index);
+        notifyItemRemoved(index);
+    }
+
+    public ArrayList<String> getDeviceInfoList() {
+        return deviceInfoList;
+    }
+
 }

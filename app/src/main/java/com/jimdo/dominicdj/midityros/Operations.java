@@ -3,10 +3,17 @@ package com.jimdo.dominicdj.midityros;
 import Usb.RecvBuffer;
 import Usb.UsbCommunicationManager;
 import Utils.Conversion;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.*;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -27,6 +34,15 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
     String inputMsg; // without whitespaces, extra characters, all in UPPERCASE
     String outputMsg;
 
+    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_DETACHED)) {
+                onBackPressed(); // return to MainActivity
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +54,9 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
 
         usbCommunicationManager = MainActivity.getUsbCommunicationManager();
         usbCommunicationManager.createRecvBuffer(this);
+        usbCommunicationManager.startReceive();
+
+        this.registerReceiver(usbReceiver, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
     }
 
     private void restrictText() {
@@ -104,21 +123,23 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
         }
     }
 
-    public void onReceiveMessage(View v) {
-        usbCommunicationManager.startReceive();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        usbCommunicationManager.releaseUsb();
-    }
-
     @Override
     public void onBackPressed() {
         usbCommunicationManager.releaseUsb();
         Toast.makeText(this, "Connection closed", Toast.LENGTH_SHORT).show();
         super.onBackPressed();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                // take the user back, as if they pressed the left-facing triangle icon on the main android toolbar
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     public void updateMsg(View view) {

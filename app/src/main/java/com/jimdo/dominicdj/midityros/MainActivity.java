@@ -10,10 +10,14 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.Toast;
 
-public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDeviceOnClickHandler {
+import java.util.ArrayList;
+
+public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDeviceOnClickHandler,
+        UsbCommunicationManager.UsbDevicesListener {
 
     private static UsbCommunicationManager usbCommunicationManager;
     private RecyclerView usbDeviceRecyclerView;
+    private static UsbDevicesAdapter usbDevicesAdapter;
 
     private UsbDevice[] availableDevices;
 
@@ -23,10 +27,9 @@ public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDevic
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         usbDeviceRecyclerView = findViewById(R.id.recyclerview_usb_device_list);
 
-        usbCommunicationManager = new UsbCommunicationManager(this);
+        usbCommunicationManager = new UsbCommunicationManager(this, this);
         initRecyclerView();
     }
 
@@ -34,21 +37,23 @@ public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDevic
      * Set up the RecyclerView and fill with elements extracted from {@link UsbCommunicationManager}
      */
     private void initRecyclerView() {
-        availableDevices = usbCommunicationManager.getAvailableDevices(); // do this again if device attached/detached
+        availableDevices = usbCommunicationManager.getAvailableDevices();
+        usbDeviceRecyclerView.setLayoutManager(new LinearLayoutManager(this)); // set adapter
 
         if (availableDevices.length == 0) {
-            Toast.makeText(this, "No MIDI device attached!", Toast.LENGTH_SHORT).show();
-        } else { // TODO: can we do this? no setting recyclerView, is it empty or exception?
-            String[] devicesInfo = usbCommunicationManager.getDevicesInfo(availableDevices);
-            usbDeviceRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-            UsbDevicesAdapter adapter = new UsbDevicesAdapter(devicesInfo, this);
-            usbDeviceRecyclerView.setAdapter(adapter);
+            Log.d(TAG, "No midi device attached");
+            Toast.makeText(this, "No MIDI device attached", Toast.LENGTH_SHORT).show();
+        } else {
+            ArrayList<String> devicesInfo = usbCommunicationManager.getDevicesInfo(availableDevices);
+            usbDevicesAdapter = new UsbDevicesAdapter(devicesInfo, this);
+            usbDeviceRecyclerView.setAdapter(usbDevicesAdapter);
         }
     }
 
     @Override
     public void onClickDevice(int adapterPosition) {
-        UsbDevice usbDevice = availableDevices[adapterPosition]; // ensure that order is maintained!!!
+        availableDevices = usbCommunicationManager.getAvailableDevices(); // to prevent index out of bound exception
+        UsbDevice usbDevice = availableDevices[adapterPosition]; // TODO: ensure that order is maintained!!!
         if (usbCommunicationManager.connectToUsbDevice(usbDevice)) {
             Log.d(TAG, "Connected to usbDevice: " + usbDevice);
             Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
@@ -60,5 +65,41 @@ public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDevic
 
     public static UsbCommunicationManager getUsbCommunicationManager() {
         return usbCommunicationManager;
+    }
+
+    public static UsbDevicesAdapter getUsbDevicesAdapter() {
+        return usbDevicesAdapter;
+    }
+
+    @Override
+    public void appendItem(UsbDevice newDevice) {
+        if (usbDevicesAdapter == null) {
+            usbDevicesAdapter = new UsbDevicesAdapter(new ArrayList<String>(), this); // empty arraylist?
+            usbDeviceRecyclerView.setAdapter(usbDevicesAdapter);
+        }
+        // update adapter
+        usbDevicesAdapter.appendItem(usbCommunicationManager.getDeviceInfo(newDevice));
+    }
+
+    @Override
+    public void deleteItem(UsbDevice newDevice) {
+        // if usbDevicesAdapter is null, no item can be deleted (there hasn't been an item before)
+        if (usbDevicesAdapter == null) {
+            return;
+        }
+        // find out the index of newDevice in adapter
+        ArrayList<String> devicesInfoList = usbDevicesAdapter.getDeviceInfoList(); // TODO: memory leak possible?
+        String newDeviceRepresentation = usbCommunicationManager.getDeviceInfo(newDevice); // TODO: make a contract
+        int index = -1;
+        for (int i = 0; i < devicesInfoList.size(); i++) {
+            if (devicesInfoList.get(i).equals(newDeviceRepresentation)) {
+                index = i;
+                break;
+            }
+        }
+        if (index != -1) {
+            // update adapter
+            usbDevicesAdapter.deleteItem(index);
+        }
     }
 }
