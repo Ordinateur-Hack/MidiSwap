@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MidiSwap</string>
-    <string name="select_device">Please select a MIDI device</string>
+    <string name="app_name">Midi Swap</string>
+    <string name="select_device">Select a MIDI device</string>
     <string name="start">Start</string>
 </resources>
