@@ -1,73 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
-<GridLayout
+<RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:columnCount="2"
-        tools:context=".Operations"
-        android:padding="16dp"
-        >
+        android:layout_height="match_parent"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:keepScreenOn="true">
 
-    <Button
-            android:id="@+id/btn_receive"
-            android:layout_height="72dp"
-            android:layout_columnSpan="2"
-            android:layout_gravity="fill"
-            android:backgroundTint="@color/colorPrimaryDark"
-            android:textColor="#fff"
-            android:text="Start Receive"
-            android:textSize="20sp"
-            android:onClick="onReceiveMessage"/>
+    <GridLayout
+            android:id="@+id/grid_layout_operations"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:columnCount="2"
+            tools:context=".Operations"
+            android:padding="16dp"
+            >
 
-    <Button
-            android:id="@+id/btn_send_on"
-            android:layout_gravity="fill"
-            android:layout_columnWeight="1"
-            android:backgroundTint="@color/colorPrimaryDark"
-            android:textColor="#fff"
-            android:text="Note on"
-            android:onClick="onSendMessage"/>
+        <Button
+                android:id="@+id/btn_send_on"
+                android:layout_gravity="fill"
+                android:layout_columnWeight="1"
+                android:backgroundTint="@color/colorPrimaryDark"
+                android:textColor="@android:color/white"
+                android:text="Note on"
+                android:onClick="onSendMessage"/>
 
-    <Button
-            android:id="@+id/btn_send_off"
-            android:layout_gravity="fill"
-            android:layout_columnWeight="1"
-            android:backgroundTint="@color/colorPrimaryDark"
-            android:textColor="#fff"
-            android:text="Note off"
-            android:onClick="onSendMessage"/>
+        <Button
+                android:id="@+id/btn_send_off"
+                android:layout_gravity="fill"
+                android:layout_columnWeight="1"
+                android:backgroundTint="@color/colorPrimaryDark"
+                android:textColor="@android:color/white"
+                android:text="Note off"
+                android:onClick="onSendMessage"/>
 
-    <EditText
-            android:id="@+id/edit_text_input_msg"
-            android:layout_width="0dp"
-            android:layout_gravity="fill"
-            android:layout_columnWeight="1"
-            android:inputType="text"
+        <EditText
+                android:id="@+id/edit_text_input_msg"
+                android:layout_width="0dp"
+                android:layout_gravity="fill"
+                android:layout_columnWeight="1"
+                android:inputType="text"
+                android:textSize="18sp"
+                android:maxLength="11"
+                tools:text="AA BB CC DD">
+        </EditText>
+
+        <EditText
+                android:id="@+id/edit_text_output_msg"
+                android:layout_width="0dp"
+                android:layout_gravity="fill"
+                android:layout_columnWeight="1"
+                android:inputType="text"
+                android:textSize="18sp"
+                android:maxLength="11"
+                tools:text="AA BB CC DD">
+        </EditText>
+
+        <Button
+                android:layout_column="1"
+                android:layout_gravity="right"
+                android:layout_columnWeight="1"
+                android:textSize="16sp"
+                android:inputType="text"
+                android:text="OK"
+                android:onClick="updateMsg"/>
+
+    </GridLayout>
+
+    <View
+            android:id="@+id/separator"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/grid_layout_operations"
+            android:background="@android:color/black"
+            android:alpha=".4"/>
+
+    <LinearLayout
+            android:id="@+id/linear_layout_send"
+            android:layout_width="match_parent"
+            android:layout_height="79dp"
+            android:layout_below="@id/separator"
+            android:padding="16dp"
+            android:orientation="horizontal"
+            android:layout_marginTop="1dp">
+
+
+        <EditText
+                android:id="@+id/edit_text_custom_msg"
+                android:layout_width="match_parent"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:textSize="18sp"
+                tools:text="12 34 56">
+        </EditText>
+
+
+        <Button
+                android:id="@+id/btn_send_msg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:layout_columnWeight="1"
+                android:backgroundTint="@color/colorPrimaryDark"
+                android:textColor="@android:color/white"
+                android:text="Send"
+                android:onClick="onSendMessage"/>
+
+    </LinearLayout>
+
+    <TextView
+            android:id="@+id/tv_midi_msg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/linear_layout_send"
+            android:layout_alignParentBottom="true"
+            android:padding="16dp"
             android:textSize="18sp"
-            android:maxLength="11"
-            tools:text="AA BB CC DD">
-    </EditText>
+            android:text="Midi Messages:\n
+I will develop this feature in the future so that the user sees the received MidiMessages here."/>
 
-    <EditText
-            android:id="@+id/edit_text_output_msg"
-            android:layout_width="0dp"
-            android:layout_gravity="fill"
-            android:layout_columnWeight="1"
-            android:inputType="text"
-            android:textSize="18sp"
-            android:maxLength="11"
-            tools:text="AA BB CC DD">
-    </EditText>
-
-    <Button
-            android:layout_column="1"
-            android:layout_gravity="right"
-            android:layout_columnWeight="1"
-            android:textSize="16sp"
-            android:inputType="text"
-            android:text="OK"
-            android:onClick="updateMsg"/>
-
-</GridLayout>
+</RelativeLayout>

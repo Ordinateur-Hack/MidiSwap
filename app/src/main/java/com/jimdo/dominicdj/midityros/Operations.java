@@ -7,11 +7,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.text.*;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.Spanned;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,6 +32,7 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
 
     private EditText inputMsgEditText;
     private EditText outputMsgEditText;
+    private EditText customMsgEditText;
 
     String inputMsg; // without whitespaces, extra characters, all in UPPERCASE
     String outputMsg;
@@ -50,6 +53,7 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
 
         inputMsgEditText = findViewById(R.id.edit_text_input_msg);
         outputMsgEditText = findViewById(R.id.edit_text_output_msg);
+        customMsgEditText = findViewById(R.id.edit_text_custom_msg);
         restrictText();
 
         usbCommunicationManager = MainActivity.getUsbCommunicationManager();
@@ -60,6 +64,8 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
     }
 
     private void restrictText() {
+        // TODO: adjust input filters so that there are now unnecessary spaces when the user wants to add a hex
+        //  character not at the end, but in the middle of the text (caret position not at the end)
         InputFilter[] filters = new InputFilter[2];
         filters[0] = new InputFilter.AllCaps();
         filters[1] = new InputFilter() {
@@ -76,9 +82,25 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
         inputMsgEditText.setFilters(filters);
         outputMsgEditText.setFilters(filters);
 
+        InputFilter[] filtersCustomMsg = new InputFilter[2];
+        filtersCustomMsg[0] = new InputFilter.AllCaps();
+        filtersCustomMsg[1] = new InputFilter() {
+            @Override
+            public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+                // although there is a AllCaps-filter include small caps letters as well in this regex
+                if (source.length() == 0 || source.toString().matches("[ \\da-fA-F]+")) {
+                    return null; // accept the original replacement
+                } else {
+                    return ""; // do not accept
+                }
+            }
+        };
+        customMsgEditText.setFilters(filtersCustomMsg);
+
         // Format in HEX code with whitespace after every second character
         addTextWatcher(inputMsgEditText);
         addTextWatcher(outputMsgEditText);
+        addTextWatcher(customMsgEditText);
     }
 
     private void addTextWatcher(final EditText editText) {
@@ -100,7 +122,7 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
                     }
                 }
                 // Insert space where needed: in front of every third character
-                if (s.length() > 0 && (s.length() % 3) == 0 && s.charAt(s.length()-1) != ' ') {
+                if (s.length() > 0 && (s.length() % 3) == 0 && s.charAt(s.length() - 1) != ' ') {
                     s.insert(s.length() - 1, " ");
                 }
             }
@@ -109,11 +131,14 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
     }
 
     public void onSendMessage(View v) {
+        int id = v.getId();
         String hexMessage = "1991257A"; // Standard message
-        if (v.getId() == R.id.btn_send_on) {
+        if (id == R.id.btn_send_on) {
             hexMessage = "19913A7A"; // NOTE ON, channel 1, note 3A, volume: 7A
-        } else if (v.getId() == R.id.btn_send_off) {
+        } else if (id == R.id.btn_send_off) {
             hexMessage = "18813A7A";
+        } else if (id == R.id.btn_send_msg) {
+            hexMessage = customMsgEditText.getText().toString().replaceAll("\\s+", "").toUpperCase();
         }
 
         if (usbCommunicationManager.send(Utils.Conversion.toByteArray(hexMessage))) {
