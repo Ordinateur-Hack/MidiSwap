@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.jimdo.dominicdj.midityros">
-
-    <uses-sdk android:minSdkVersion="21"/>
+          package="com.jimdo.dominicdj.midiswap">
 
     <!--not all Android-powered devices are guaranteed to support the USB host API-->
     <uses-feature android:name="android.hardware.usb.host"/>
@@ -14,7 +12,8 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity"
+        <activity
+                android:name="com.jimdo.dominicdj.midiswap.MainActivity"
                 android:theme="@android:style/Theme.Black.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -22,12 +21,13 @@
             </intent-filter>
 
         </activity>
-        <activity android:name=".Operations"
-                android:parentActivityName=".MainActivity">
+        <activity
+                android:name="com.jimdo.dominicdj.midiswap.Operations"
+                android:parentActivityName="com.jimdo.dominicdj.midiswap.MainActivity">
             <!-- The meta-data tag is required if you support API level 15 and lower -->
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
-                    android:value=".MainActivity" />
+                    android:value="com.jimdo.dominicdj.midiswap.MainActivity"/>
         </activity>
     </application>
 

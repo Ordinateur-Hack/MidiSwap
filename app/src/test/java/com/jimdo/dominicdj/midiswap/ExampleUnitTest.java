@@ -1,4 +1,4 @@
-package com.jimdo.dominicdj.midityros;
+package com.jimdo.dominicdj.midiswap;
 
 import org.junit.Test;
 

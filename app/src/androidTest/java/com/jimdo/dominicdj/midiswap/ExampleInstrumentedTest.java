@@ -1,4 +1,4 @@
-package com.jimdo.dominicdj.midityros;
+package com.jimdo.dominicdj.midiswap;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
