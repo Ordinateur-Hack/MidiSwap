@@ -3,11 +3,9 @@ package com.jimdo.dominicdj.midiswap;
 import Usb.RecvBuffer;
 import Usb.UsbCommunicationManager;
 import Utils.Conversion;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -36,6 +34,8 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
 
     String inputMsg; // without whitespaces, extra characters, all in UPPERCASE
     String outputMsg;
+
+    boolean serviceDone = false;
 
     private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
         @Override
@@ -202,6 +202,20 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
     }
 
     public void onUpdateByte(ByteBuffer byteBuffer) {
+        // ===
+        // Test
+        if (!serviceDone) { // start Service only one time
+            Intent midiServiceIntent = new Intent(this, MidiHandlerService.class);
+            ComponentName serviceName;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                serviceName = startForegroundService(midiServiceIntent);
+            } else {
+                serviceName = startService(midiServiceIntent);
+            }
+            Log.d(TAG, "SERVICE: " + serviceName);
+            serviceDone = true;
+        }
+
         String data = Conversion.toHexString(byteBuffer.array());
         Log.d(TAG, data);
         data = data.replaceAll("\\s+", "");

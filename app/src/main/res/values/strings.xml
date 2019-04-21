@@ -2,4 +2,8 @@
     <string name="app_name">Midi Swap</string>
     <string name="select_device">Select a MIDI device</string>
     <string name="start">Start</string>
+
+    <string name="midi_handler_notification_title">MIDI Handler</string>
+    <string name="midi_handler_notification_message">MIDI processing with USB device is active.</string>
+
 </resources>
