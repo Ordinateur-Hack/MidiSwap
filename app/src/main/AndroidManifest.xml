@@ -3,7 +3,7 @@
           package="com.jimdo.dominicdj.midiswap">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <!--not all Android-powered devices are guaranteed to support the USB host API-->
+    <!--not all Android-powered devices are guaranteed to support the com.jimdo.dominicdj.midiswap.USB host API-->
     <uses-feature android:name="android.hardware.usb.host"/>
 
     <application

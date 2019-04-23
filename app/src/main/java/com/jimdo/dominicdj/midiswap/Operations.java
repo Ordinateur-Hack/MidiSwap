@@ -1,8 +1,8 @@
 package com.jimdo.dominicdj.midiswap;
 
-import Usb.RecvBuffer;
-import Usb.UsbCommunicationManager;
-import Utils.Conversion;
+import com.jimdo.dominicdj.midiswap.USB.RecvBuffer;
+import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
+import com.jimdo.dominicdj.midiswap.Utils.Conversion;
 import android.content.*;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
@@ -141,7 +141,7 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
             hexMessage = customMsgEditText.getText().toString().replaceAll("\\s+", "").toUpperCase();
         }
 
-        if (usbCommunicationManager.send(Utils.Conversion.toByteArray(hexMessage))) {
+        if (usbCommunicationManager.send(com.jimdo.dominicdj.midiswap.Utils.Conversion.toByteArray(hexMessage))) {
             Toast.makeText(this, "Sent message", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "Message sent failed", Toast.LENGTH_SHORT).show();

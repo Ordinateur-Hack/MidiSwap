@@ -1,8 +1,8 @@
 package com.jimdo.dominicdj.midiswap;
 
-import Usb.RecvBuffer;
-import Usb.UsbCommunicationManager;
-import Utils.Conversion;
+import com.jimdo.dominicdj.midiswap.USB.RecvBuffer;
+import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
+import com.jimdo.dominicdj.midiswap.Utils.Conversion;
 
 import java.nio.ByteBuffer;
 

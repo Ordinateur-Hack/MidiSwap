@@ -1,4 +1,4 @@
-package Usb;
+package com.jimdo.dominicdj.midiswap.USB;
 
 import android.util.Log;
 

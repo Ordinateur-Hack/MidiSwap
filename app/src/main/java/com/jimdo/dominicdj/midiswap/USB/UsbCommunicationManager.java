@@ -1,4 +1,4 @@
-package Usb;
+package com.jimdo.dominicdj.midiswap.USB;
 
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
@@ -78,16 +78,16 @@ public class UsbCommunicationManager {
 
                 switch (action) {
                     case UsbManager.ACTION_USB_DEVICE_ATTACHED:
-                        Log.d(TAG, "USB device attached.");
-                        Toast.makeText(context, "USB device attached", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, "com.jimdo.dominicdj.midiswap.USB device attached.");
+                        Toast.makeText(context, "com.jimdo.dominicdj.midiswap.USB device attached", Toast.LENGTH_SHORT).show();
                         Log.d(TAG, "New device to attach: " + newDevice);
                         if (newDevice != null) {
                             usbDevicesListener.appendItem(newDevice);
                         }
                         break;
                     case UsbManager.ACTION_USB_DEVICE_DETACHED:
-                        Log.d(TAG, "USB device detached." + newDevice);
-                        Toast.makeText(context, "USB device detached", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, "com.jimdo.dominicdj.midiswap.USB device detached." + newDevice);
+                        Toast.makeText(context, "com.jimdo.dominicdj.midiswap.USB device detached", Toast.LENGTH_SHORT).show();
                         if (newDevice != null) {
                             usbDevicesListener.deleteItem(newDevice);
                         }
@@ -170,7 +170,7 @@ public class UsbCommunicationManager {
 
     /**
      * Find the right interface and endpoints for the communication.
-     * <p>See <a href="https://de.wikipedia.org/wiki/Universal_Serial_Bus#Bulk-Transfer">USB (Wikipedia)</a>
+     * <p>See <a href="https://de.wikipedia.org/wiki/Universal_Serial_Bus#Bulk-Transfer">com.jimdo.dominicdj.midiswap.USB (Wikipedia)</a>
      */
     private boolean setUpConnectionOld() {
         /*for (int i = 0; i < usbDevice.getInterfaceCount(); i++) {
@@ -250,7 +250,7 @@ public class UsbCommunicationManager {
         // https://stackoverflow.com/questions/12345953/android-usb-host-asynchronous-interrupt-transfer
         // could help
 
-        String hexMessage = Utils.Conversion.toHexString(bytes);
+        String hexMessage = com.jimdo.dominicdj.midiswap.Utils.Conversion.toHexString(bytes);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -270,7 +270,7 @@ public class UsbCommunicationManager {
             return false;
         }
 //        Log.d(TAG, "In receive and connection properly set up ;)");
-//        Log.d(TAG, "USB Manager has access? " + String.valueOf(usbManager.hasPermission(usbDevice)));
+//        Log.d(TAG, "com.jimdo.dominicdj.midiswap.USB Manager has access? " + String.valueOf(usbManager.hasPermission(usbDevice)));
 
         // reinitialize read value byte array
         //Arrays.fill(readBytes, (byte) 0);
@@ -331,7 +331,7 @@ public class UsbCommunicationManager {
             // wait for event (confirmation that request was completed)
             if (connection.requestWait() == request) {
                 recvBuffer.updateBuffer(buffer);
-                Log.d(TAG, "USB request successfully completed.");
+                Log.d(TAG, "com.jimdo.dominicdj.midiswap.USB request successfully completed.");
             } else {
                 Log.d(TAG, "requestWait failed!");
             }

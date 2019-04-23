@@ -1,6 +1,6 @@
 package com.jimdo.dominicdj.midiswap;
 
-import Usb.UsbCommunicationManager;
+import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
 import android.app.Activity;
 import android.content.Intent;
 import android.hardware.usb.UsbDevice;

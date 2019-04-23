@@ -1,4 +1,4 @@
-package Utils;
+package com.jimdo.dominicdj.midiswap.Utils;
 
 public class Conversion {
 
