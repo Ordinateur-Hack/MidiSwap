@@ -1,6 +1,5 @@
 package com.jimdo.dominicdj.midiswap;
 
-import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
 import android.app.Activity;
 import android.content.Intent;
 import android.hardware.usb.UsbDevice;
@@ -9,11 +8,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.Toast;
+import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
 
 import java.util.ArrayList;
 
 public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDeviceOnClickHandler,
-        UsbCommunicationManager.UsbDevicesListener {
+        UsbCommunicationManager.UsbConnectionListener {
 
     private static UsbCommunicationManager usbCommunicationManager;
     private RecyclerView usbDeviceRecyclerView;
@@ -29,8 +29,16 @@ public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDevic
         setContentView(R.layout.activity_main);
         usbDeviceRecyclerView = findViewById(R.id.recyclerview_usb_device_list);
 
-        usbCommunicationManager = new UsbCommunicationManager(this, this);
+        // You have to create a usbCommunicationManager in here
+        // !!! DO NOT CHANGE, because we don't check for null values in this class
+        usbCommunicationManager = new UsbCommunicationManager(getApplicationContext(), this);
         initRecyclerView();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        usbCommunicationManager.registerReceivers();
     }
 
     /**
@@ -54,25 +62,24 @@ public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDevic
     public void onClickDevice(int adapterPosition) {
         availableDevices = usbCommunicationManager.getAvailableDevices(); // to prevent index out of bound exception
         UsbDevice usbDevice = availableDevices[adapterPosition]; // TODO: ensure that order is maintained!!!
-        if (usbCommunicationManager.connectToUsbDevice(usbDevice)) {
-            Log.d(TAG, "Connected to usbDevice: " + usbDevice);
-            Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, Operations.class));
-        } else {
-            Log.d(TAG, "Connection to usbDevice failed: " + usbDevice);
-        }
+
+        usbCommunicationManager.connectToUsbDevice(usbDevice);
+        Log.d(TAG, "Trying to connect to USB-device: " + usbDevice);
+    }
+
+    @Override
+    public void onConnectionSuccessful(UsbDevice usbDevice) {
+        Log.d(TAG, "Connected to USB-device: " + usbDevice);
+        Toast.makeText(this, "Connected to USB-device", Toast.LENGTH_SHORT).show();
+        startActivity(new Intent(this, Operations.class));
     }
 
     public static UsbCommunicationManager getUsbCommunicationManager() {
         return usbCommunicationManager;
     }
 
-    public static UsbDevicesAdapter getUsbDevicesAdapter() {
-        return usbDevicesAdapter;
-    }
-
     @Override
-    public void appendItem(UsbDevice newDevice) {
+    public void notifyAddItem(UsbDevice newDevice) {
         if (usbDevicesAdapter == null) {
             usbDevicesAdapter = new UsbDevicesAdapter(new ArrayList<String>(), this); // empty arraylist?
             usbDeviceRecyclerView.setAdapter(usbDevicesAdapter);
@@ -82,7 +89,7 @@ public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDevic
     }
 
     @Override
-    public void deleteItem(UsbDevice newDevice) {
+    public void notifyRemoveItem(UsbDevice newDevice) {
         // if usbDevicesAdapter is null, no item can be deleted (there hasn't been an item before)
         if (usbDevicesAdapter == null) {
             return;
@@ -101,5 +108,22 @@ public class MainActivity extends Activity implements UsbDevicesAdapter.UsbDevic
             // update adapter
             usbDevicesAdapter.deleteItem(index);
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // https://android.jlelse.eu/9-ways-to-avoid-memory-leaks-in-android-b6d81648e35e
+        /*You need to unregister the broadcast receiver since the broadcast receiver keeps a reference of the activity.
+        Now when its time for your Activity to die, the Android framework will call onDestroy() on it
+        but the garbage collector will not be able to remove the instance from memory because the broadcastReceiver
+        is still holding a strong reference to it.*/
+        usbCommunicationManager.unregisterReceivers();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        usbCommunicationManager.onDestroy();
     }
 }

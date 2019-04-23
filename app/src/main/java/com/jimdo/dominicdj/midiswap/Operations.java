@@ -1,8 +1,5 @@
 package com.jimdo.dominicdj.midiswap;
 
-import com.jimdo.dominicdj.midiswap.USB.RecvBuffer;
-import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
-import com.jimdo.dominicdj.midiswap.Utils.Conversion;
 import android.content.*;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
@@ -17,14 +14,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+import com.jimdo.dominicdj.midiswap.USB.MyUsbDeviceConnection;
+import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
+import com.jimdo.dominicdj.midiswap.Utils.Conversion;
 
-import java.nio.ByteBuffer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-public class Operations extends AppCompatActivity implements RecvBuffer.BufferChangeListener {
-
-    private static UsbCommunicationManager usbCommunicationManager;
+public class Operations extends AppCompatActivity {
 
     private static final String TAG = Operations.class.getSimpleName();
 
@@ -32,12 +26,13 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
     private EditText outputMsgEditText;
     private EditText customMsgEditText;
 
-    String inputMsg; // without whitespaces, extra characters, all in UPPERCASE
-    String outputMsg;
+    // without whitespaces, extra characters, all in UPPERCASE
+    private String inputMsg;
+    private String outputMsg;
 
-    boolean serviceDone = false;
+    private boolean midiServiceStarted = false;
 
-    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiverWithFlag usbReceiver = new BroadcastReceiverWithFlag() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_DETACHED)) {
@@ -55,12 +50,7 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
         outputMsgEditText = findViewById(R.id.edit_text_output_msg);
         customMsgEditText = findViewById(R.id.edit_text_custom_msg);
         restrictText();
-
-        usbCommunicationManager = MainActivity.getUsbCommunicationManager();
-        usbCommunicationManager.createRecvBuffer(this);
-        usbCommunicationManager.startReceive();
-
-        this.registerReceiver(usbReceiver, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
+        usbReceiver.register(this, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
     }
 
     private void restrictText() {
@@ -130,6 +120,40 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
         editText.addTextChangedListener(hexTextWatcherOut);
     }
 
+    public void startMidiHandler(View v) {
+        // start the MidiService only one time, even when user presses button repeatedly
+        // TODO: grey out button in this case (midiService already started)
+        if (!midiServiceStarted) {
+            Intent midiServiceStartIntent = new Intent(this, MidiHandlerService.class);
+            ComponentName serviceName;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                serviceName = startForegroundService(midiServiceStartIntent);
+            } else {
+                serviceName = startService(midiServiceStartIntent);
+            }
+            Log.d(TAG, "Midi Handler was started. Service is: " + serviceName);
+            midiServiceStarted = true;
+        }
+    }
+
+    public void stopMidiHandlerFromView(View view) {
+        stopMidiHandler();
+    }
+
+    private void stopMidiHandler() {
+        // stop the MidiService only if it has been started
+        if (midiServiceStarted) {
+            Intent midiServiceStopIntent = new Intent(this, MidiHandlerService.class);
+            boolean couldStopService = stopService(midiServiceStopIntent);
+            if (couldStopService) {
+                midiServiceStarted = false;
+                Log.d(TAG, "MIDI Handler was successfully stopped.");
+            } else {
+                Log.d(TAG, "MIDI Handler couldn't be stopped.");
+            }
+        }
+    }
+
     public void onSendMessage(View v) {
         int id = v.getId();
         String hexMessage = "1991257A"; // Standard message
@@ -141,18 +165,26 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
             hexMessage = customMsgEditText.getText().toString().replaceAll("\\s+", "").toUpperCase();
         }
 
-        if (usbCommunicationManager.send(com.jimdo.dominicdj.midiswap.Utils.Conversion.toByteArray(hexMessage))) {
+        MyUsbDeviceConnection myUsbDeviceConnection = UsbCommunicationManager.getMyUsbDeviceConnection();
+        if (myUsbDeviceConnection == null) {
+            Log.d(TAG, "myUsbDeviceConnection is null, so we can't send any data.");
+            return;
+        }
+        if (myUsbDeviceConnection.send(Conversion.toByteArray(hexMessage))) {
             Toast.makeText(this, "Sent message", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Message sent failed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Couldn't send message :(", Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
     public void onBackPressed() {
-        usbCommunicationManager.releaseUsb();
+        stopMidiHandler();
         Toast.makeText(this, "Connection closed", Toast.LENGTH_SHORT).show();
-        super.onBackPressed();
+        stopMidiHandler();
+        // we don't need the myUsbDeviceConnection anymore, so remove it
+        UsbCommunicationManager.closeMyUsbDeviceConnection();
+        super.onBackPressed(); // important, so that this activity finishes and frees up resources
     }
 
     @Override
@@ -169,8 +201,8 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
 
     public void updateMsg(View view) {
         // Check user input
-        // remove all whitespaces and non-visible characters (e. g. tab, \n) and only use small caps
-        // although we already restricted the editorTexts to allow only UPPERCASE, it doesn't hurt to convert
+        // Remove all whitespaces and non-visible characters (e. g. tab, \n) and only use small caps
+        // Although we already restricted the editorTexts to only allow UPPERCASE, it doesn't hurt to convert
         // everything to UPPERCASE letters again (Better safe than sorry...)
         String inputMsgRaw = inputMsgEditText.getText().toString().replaceAll("\\s+", "").toUpperCase();
         String outputMsgRaw = outputMsgEditText.getText().toString().replaceAll("\\s+", "").toUpperCase();
@@ -180,14 +212,15 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
                     Toast.LENGTH_LONG).show();
         } else {
             int inCount = countChar(inputMsgRaw, 'X');
-            int outCount = countChar(outputMsgRaw, 'X');
-            if (inCount > 2 || outCount > 2) {
-                Toast.makeText(this, "You have to many X in your message!", Toast.LENGTH_LONG).show();
+            if (inCount > 2) {
+                Toast.makeText(this, "Too many 'X's in your input message!",
+                        Toast.LENGTH_LONG).show();
                 return;
             }
             inputMsg = inputMsgRaw;
             outputMsg = outputMsgRaw;
-            Toast.makeText(this, "Updated", Toast.LENGTH_SHORT).show();
+            OperationRules.updateRule(inputMsg, outputMsg);
+            Toast.makeText(this, "Rule updated", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -201,77 +234,15 @@ public class Operations extends AppCompatActivity implements RecvBuffer.BufferCh
         return count;
     }
 
-    public void onUpdateByte(ByteBuffer byteBuffer) {
-        // ===
-        // Test
-        if (!serviceDone) { // start Service only one time
-            Intent midiServiceIntent = new Intent(this, MidiHandlerService.class);
-            ComponentName serviceName;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                serviceName = startForegroundService(midiServiceIntent);
-            } else {
-                serviceName = startService(midiServiceIntent);
-            }
-            Log.d(TAG, "SERVICE: " + serviceName);
-            serviceDone = true;
-        }
-
-        String data = Conversion.toHexString(byteBuffer.array());
-        Log.d(TAG, data);
-        data = data.replaceAll("\\s+", "");
-
-        // NOTES
-        /*Pattern p = Pattern.compile("9\\d [0-9a-fA-F]{2} [0-9a-fA-F]{2}"); // e. g. 90 XX XX
-        Matcher m = p.matcher(data);
-        if (m.find()) {
-            int startIndex = m.start();
-            String noteValue = data.substring(startIndex + 3, startIndex + 5);
-            Log.d(TAG, "Keyy pressed: " + data);
-            Log.d(TAG, "Note: " + noteValue);
-
-            if (!data.substring(startIndex + 5, startIndex + 7).equals("00")) { // pressure
-                String msg = "1BB14A" + noteValue;
-                usbCommunicationManager.send(Conversion.toByteArray(msg));
-            }
-        }*/
-
-        /*// MODULATION WHEEL
-        Pattern p = Pattern.compile("(?i)B1 01 [\\da-f]{2}"); // e. g. B1 01 XX (00-7F)
-        Matcher m = p.matcher(data);
-        if (m.find()) {
-            String modulationData = m.group();
-            Log.d(TAG, "Found modulation wheel byte: " + modulationData);
-            String hexValue = modulationData.substring(6, 8);
-            String msg = "1BB14A" + hexValue;
-            usbCommunicationManager.send(Conversion.toByteArray(msg));
-        }*/
-
-        // CUSTOM
-        // don't do anything if user hasn't already set inputMsg or outputMsg
-        if (inputMsg == null || outputMsg == null) {
-            return;
-        }
-        // check for XX values in input and adjust regex pattern accordingly
-        String regexPattern = inputMsg;
-        Matcher substituteX = Pattern.compile("XX").matcher(regexPattern);
-        Log.d(TAG, "regexPattern (before): " + regexPattern);
-        int subIndex = 0;
-        if (substituteX.find()) {
-            subIndex = substituteX.start();
-            regexPattern = regexPattern.replace("XX", "[\\da-fA-F]{2}");
-            Log.d(TAG, "regexPattern (after): " + regexPattern);
-        }
-        // search in data from usb
-        Matcher m = Pattern.compile(regexPattern).matcher(data);
-        if (m.find()) {
-            String dataValueToReplace = m.group().substring(subIndex, subIndex + 2);
-            Log.d(TAG, "Found interesting data: " + dataValueToReplace);
-            // check for XX values in output
-            // // in case: replace XX in output with respective value in data (usb) at position of XX in input
-            // TODO: check if there is after all a dataValuetoReplace (if there is XX in input)
-            String msg = outputMsg.replace("XX", dataValueToReplace);
-            Log.d(TAG, "Send message: " + msg);
-            usbCommunicationManager.send(Conversion.toByteArray(msg));
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        usbReceiver.unregister(this);
+        stopMidiHandler();
+        // we don't need the myUsbDeviceConnection anymore, so remove it
+        // note that we don't close the myUsbDeviceConnection or stop the MIDI Handler in onStop()
+        // because onStop() is called when the app becomes invisible and we want that MIDI processing to be
+        // active, even if the app isn't in focus anymore (e. g. the device screen is turned off)
+        UsbCommunicationManager.closeMyUsbDeviceConnection();
     }
 }
