@@ -15,6 +15,10 @@ import com.jimdo.dominicdj.midiswap.Utils.Conversion;
 import java.nio.ByteBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,10 +28,10 @@ public class MidiHandlerService extends IntentService {
     private static final int ONGOING_NOTIFICATION_ID = 42; // must not be 0!
     private static final String NOTIFICATION_CHANNEL_ID_MIDI_HANDLER = "com.jimdo.dominicdj.CHANNEL_MIDI_HANDLER";
 
-    MyUsbDeviceConnection myUsbDeviceConnection;
+    private MyUsbDeviceConnection myUsbDeviceConnection;
 
-    private MidiUsbRequest midiUsbRequest;
-    private Timer recvTimer;
+    private ScheduledFuture<?> midiSchedule;
+    private static final int SCHEDULE_RATE_NANO = 600;
 
     private static final String TAG = MidiHandlerService.class.getSimpleName();
 
@@ -104,19 +108,19 @@ public class MidiHandlerService extends IntentService {
                     Toast.LENGTH_LONG).show();
             stopSelf();
         }
-        midiUsbRequest = new MidiUsbRequest();
-        recvTimer = new Timer();
-        recvTimer.schedule(midiUsbRequest, 0, 10); // TODO: maybe adjust this value to fit the MIDI protocol
+
+        // Use the ExecutorService to schedule processData() to execute periodically
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        final Runnable midiUsbRequest = new Runnable() {
+            @Override
+            public void run() {
+                processData();
+            }
+        };
+        midiSchedule = scheduler.scheduleAtFixedRate(midiUsbRequest, 0, SCHEDULE_RATE_NANO,
+                TimeUnit.NANOSECONDS);
         while (true) {
             // do this in order to keep the MidiHandlerService alive; otherwise it would stop itself automatically
-        }
-    }
-
-    private class MidiUsbRequest extends TimerTask {
-
-        @Override
-        public void run() {
-            processData();
         }
     }
 
@@ -124,9 +128,9 @@ public class MidiHandlerService extends IntentService {
      * Process the data. This is basically the main logic of the program.<br>
      * It follows this procedure:
      * <ol>
-     * <li>Receive the data from the USB-device-connection</li>
+     * <li>Receive the data from the USB-device (using the {@link MyUsbDeviceConnection})</li>
      * <li>Process the data by getting the appropriate {@link OperationRules}</li>
-     * <li>Send data back to the USB-device using the USB-device-connection</li>
+     * <li>Send data back to the USB-device (using the {@link MyUsbDeviceConnection})</li>
      * </ol>
      */
     private void processData() {
@@ -178,25 +182,49 @@ public class MidiHandlerService extends IntentService {
             return;
         }
 
-        // Check for XX values in input and adjust regex pattern accordingly
+        // === How it works ===
+        // 1. Search for 'XX' pattern in ifRecvRegex and replace it with our regex pattern for hex messages.
+        //    Save the position of this 'XX' value.
+        // 2. Search the input data (received from USB-device) for ifRecvRegex.
+        //    If data was found, extract the data value (e. g. a controller value ranging from 0 to 127)
+        // 3. Search for 'XX' pattern in thenSendMsg and replace it with the data value of the previous step.
+        //    Finally, send the message to the USB-device.
+        // ====================
+
+        // Work with ifRecvRegex (1.)
         Matcher substituteX = Pattern.compile("XX").matcher(ifRecvRegex);
-        Log.d(TAG, "Regex pattern input (before modification): " + ifRecvRegex);
         int subIndex = 0;
         if (substituteX.find()) {
             subIndex = substituteX.start();
             ifRecvRegex = ifRecvRegex.replace("XX", "[\\da-fA-F]{2}");
-            Log.d(TAG, "Regex pattern for input (after modification): " + ifRecvRegex);
+            Log.d(TAG, "Regex pattern for input: " + ifRecvRegex);
         }
 
-        // Search for ifRecvRegex in data received from USB-device
+        // Work with data received from USB-device. (2.)
         Matcher m = Pattern.compile(ifRecvRegex).matcher(data);
-        if (m.find()) {
-            String dataValueToReplace = m.group().substring(subIndex, subIndex + 2);
-            // TODO: check for XX values in output
-            // in case: replace XX in output with respective value in data (usb) at position of XX in input
-            // TODO: check if there is after all a dataValuetoReplace (if there is XX in input)
-            String msg = thenSendMsg.replace("XX", dataValueToReplace);
+        String matchedData = null;
+        boolean hitEnd = false;
+        while (!hitEnd) {
+            if (m.find()) {
+                matchedData = m.group();
+            } else {
+                // matcher.hitEnd() method refers to the input regex, not the input data,
+                // so we can't use this method here.
+                // Instead, we just check the boolean return value from matcher.find().
+                // We reached the end, if it returns false.
+                hitEnd = true;
+            }
+        }
 
+        // If we have found an input sequence that matches the pattern, get the bytes
+        // at the position of the 'XX' pattern in ifRecvRegex. (still 2.)
+        if (matchedData != null) {
+            String dataValueToReplace = matchedData.substring(subIndex, subIndex + 2);
+            // Replace 'XX' in thenSendMsg with respective value in input data (received from USB-device)
+            // at the position of 'XX' in ifRecvRegex.
+            String msg = thenSendMsg.replace("XX", dataValueToReplace); // replace with previous data (3.)
+            // TODO: check for XX values in output
+            // TODO: check if there is after all a dataValuetoReplace (if there is XX in input)
             // ==========================================================================
             // Send data back
             // ==========================================================================
@@ -207,10 +235,9 @@ public class MidiHandlerService extends IntentService {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (recvTimer != null)
-            recvTimer.cancel();
-        if (midiUsbRequest != null)
-            midiUsbRequest.cancel();
+        if (midiSchedule != null) {
+            midiSchedule.cancel(true);
+        }
     }
 
 }
