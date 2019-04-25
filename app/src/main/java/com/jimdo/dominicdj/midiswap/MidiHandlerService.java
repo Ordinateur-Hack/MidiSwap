@@ -13,8 +13,6 @@ import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
 import com.jimdo.dominicdj.midiswap.Utils.Conversion;
 
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -98,6 +96,9 @@ public class MidiHandlerService extends IntentService {
 
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
+        if (intent == null) {
+            return;
+        }
         // ==========================================================================
         // Receive and send MIDI data
         // ==========================================================================
@@ -135,17 +136,28 @@ public class MidiHandlerService extends IntentService {
      */
     private void processData() {
         // ==========================================================================
-        // Receive data
+        // 1. Receive data
         // ==========================================================================
-        ByteBuffer receivedBytes = myUsbDeviceConnection.receive();
+        // we get a response via our onFinishedReceiveHandler including the received bytes
+        ByteBuffer receivedBytes = null;
+        try {
+            receivedBytes = myUsbDeviceConnection.receive();
+        } catch (MyUsbDeviceConnection.CalledFromWrongThreadException e) {
+            e.printStackTrace();
+        }
+        // Return if we didn't receive any bytes.
+        if (receivedBytes == null) {
+            return;
+        }
+
+        // ==========================================================================
+        // 2. Process the data
+        // ==========================================================================
         String data = Conversion.toHexString(receivedBytes.array());
         Log.d(TAG, data);
         // regex "\\s+" matches sequence of one or more whitespace characters
         data = data.replaceAll("\\s+", "");
 
-        // ==========================================================================
-        // Process the data
-        // ==========================================================================
         String[] rule = OperationRules.getRule();
         String ifRecvRegex = rule[0];
         String thenSendMsg = rule[1];
@@ -177,8 +189,10 @@ public class MidiHandlerService extends IntentService {
         }*/
 
         // CUSTOM
-        // don't do anything if user hasn't already set inputMsg or outputMsg
+        // REturn if user hasn't already set inputMsg or outputMsg.
         if (ifRecvRegex == null || thenSendMsg == null) {
+            Log.d(TAG, "The user hasn't specified any OperationRules yet. The data is not going to be processed " +
+                    "further on.");
             return;
         }
 
@@ -226,9 +240,13 @@ public class MidiHandlerService extends IntentService {
             // TODO: check for XX values in output
             // TODO: check if there is after all a dataValuetoReplace (if there is XX in input)
             // ==========================================================================
-            // Send data back
+            // 3. Send data back
             // ==========================================================================
-            myUsbDeviceConnection.send(Conversion.toByteArray(msg));
+            try {
+                myUsbDeviceConnection.send(Conversion.toByteArray(msg));
+            } catch (MyUsbDeviceConnection.CalledFromWrongThreadException e) {
+                e.printStackTrace();
+            }
         }
     }
 

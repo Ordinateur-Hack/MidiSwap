@@ -1,6 +1,9 @@
 package com.jimdo.dominicdj.midiswap;
 
-import android.content.*;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -165,16 +168,37 @@ public class Operations extends AppCompatActivity {
             hexMessage = customMsgEditText.getText().toString().replaceAll("\\s+", "").toUpperCase();
         }
 
-        MyUsbDeviceConnection myUsbDeviceConnection = UsbCommunicationManager.getMyUsbDeviceConnection();
+        final MyUsbDeviceConnection myUsbDeviceConnection = UsbCommunicationManager.getMyUsbDeviceConnection();
         if (myUsbDeviceConnection == null) {
             Log.d(TAG, "myUsbDeviceConnection is null, so we can't send any data.");
             return;
         }
-        if (myUsbDeviceConnection.send(Conversion.toByteArray(hexMessage))) {
-            Toast.makeText(this, "Sent message", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "Couldn't send message :(", Toast.LENGTH_SHORT).show();
-        }
+
+        final String finalHexMessage = hexMessage;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                boolean sendSucceeded = false;
+                try {
+                    sendSucceeded = myUsbDeviceConnection.send(Conversion.toByteArray(finalHexMessage));
+                } catch (MyUsbDeviceConnection.CalledFromWrongThreadException e) {
+                    e.printStackTrace();
+                }
+
+                final boolean finalSendSucceeded = sendSucceeded;
+                Operations.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (finalSendSucceeded) {
+                            Toast.makeText(getApplicationContext(), "Sent message", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Couldn't send message", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        }).start();
+
     }
 
     @Override
