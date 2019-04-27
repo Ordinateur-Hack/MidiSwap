@@ -62,9 +62,23 @@
                 android:layout_columnWeight="1"
                 android:textSize="16sp"
                 android:text="OK"
-                android:onClick="updateMsg"/>
+                android:onClick="updateMsgFromView"/>
 
-        <Button android:layout_row="2"
+        <Spinner
+                android:id="@+id/spinner_receive_msg"
+                android:layout_height="40dp"
+                android:layout_columnWeight="1"
+                android:layout_gravity="fill">
+        </Spinner>
+
+        <Spinner
+                android:id="@+id/spinner_send_msg"
+                android:layout_height="40dp"
+                android:layout_columnWeight="1"
+                android:layout_gravity="fill">
+        </Spinner>
+
+        <Button
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill"
                 android:backgroundTint="@color/colorAccent"
@@ -73,7 +87,8 @@
                 android:text="Stop MIDI"
                 android:onClick="stopMidiHandlerFromView"/>
 
-        <Button android:layout_row="2"
+        <Button
+                android:layout_row="2"
                 android:layout_gravity="fill"
                 android:layout_columnWeight="1"
                 android:backgroundTint="@color/colorAccent"

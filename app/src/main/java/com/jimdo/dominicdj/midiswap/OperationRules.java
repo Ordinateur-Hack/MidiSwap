@@ -16,4 +16,12 @@ public class OperationRules {
         OperationRules.thenSendMsg = thenSendMsg;
     }
 
+    public static void updateRuleRecv(String ifRecvMsg) {
+        OperationRules.ifRecvMsg = ifRecvMsg;
+    }
+
+    public static void updateRuleSend(String thenSendMsg) {
+        OperationRules.thenSendMsg = thenSendMsg;
+    }
+
 }

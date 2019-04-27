@@ -15,19 +15,25 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.Toast;
+import android.widget.*;
 import com.jimdo.dominicdj.midiswap.USB.MyUsbDeviceConnection;
 import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
 import com.jimdo.dominicdj.midiswap.Utils.Conversion;
+import com.jimdo.dominicdj.midiswap.midimessage.MidiController;
+import com.jimdo.dominicdj.midiswap.midimessage.MidiControllerBuilder;
 
-public class Operations extends AppCompatActivity {
+import java.util.List;
+
+public class Operations extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     private static final String TAG = Operations.class.getSimpleName();
 
     private EditText inputMsgEditText;
     private EditText outputMsgEditText;
     private EditText customMsgEditText;
+
+    private Spinner receiveMsgSpinner;
+    private Spinner sendMsgSpinner;
 
     // without whitespaces, extra characters, all in UPPERCASE
     private String inputMsg;
@@ -54,6 +60,23 @@ public class Operations extends AppCompatActivity {
         customMsgEditText = findViewById(R.id.edit_text_custom_msg);
         restrictText();
         usbReceiver.register(this, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
+
+        // ==========================================================================
+        // Spinners
+        // ==========================================================================
+        receiveMsgSpinner = findViewById(R.id.spinner_receive_msg);
+        sendMsgSpinner = findViewById(R.id.spinner_send_msg);
+        // load data for spinner
+        initSpinner(receiveMsgSpinner, MidiControllerBuilder.getAvailableMidiControllers(true));
+        initSpinner(sendMsgSpinner, MidiControllerBuilder.getAvailableMidiControllers(false));
+    }
+
+    private void initSpinner(Spinner sendMsgSpinner, List<MidiController> midiControllersList) {
+        ArrayAdapter<MidiController> adapterSend = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
+                midiControllersList);
+        adapterSend.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sendMsgSpinner.setAdapter(adapterSend);
+        sendMsgSpinner.setOnItemSelectedListener(this);
     }
 
     private void restrictText() {
@@ -198,7 +221,6 @@ public class Operations extends AppCompatActivity {
                 });
             }
         }).start();
-
     }
 
     @Override
@@ -223,7 +245,38 @@ public class Operations extends AppCompatActivity {
         }
     }
 
-    public void updateMsg(View view) {
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        if (parent.getId() == R.id.spinner_receive_msg || parent.getId() == R.id.spinner_send_msg) {
+            MidiController midiController = (MidiController) parent.getItemAtPosition(position);
+
+            switch (parent.getId()) {
+                case R.id.spinner_receive_msg:
+                    String msgRecv = midiController.getMidiMessage().getHexMessage();
+                    OperationRules.updateRuleRecv(msgRecv);
+                    Toast.makeText(getApplicationContext(), "New recv msg: " + msgRecv,
+                            Toast.LENGTH_SHORT).show();
+                    break;
+                case R.id.spinner_send_msg:
+                    String msgSend = midiController.getMidiMessage().getHexMessage();
+                    OperationRules.updateRuleSend(msgSend);
+                    Toast.makeText(getApplicationContext(), "New send msg: " + msgSend,
+                            Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        // ignore
+    }
+
+    public void updateMsgFromView(View view) {
+        updateMsg();
+    }
+
+    private void updateMsg() {
         // Check user input
         // Remove all whitespaces and non-visible characters (e. g. tab, \n) and only use small caps
         // Although we already restricted the editorTexts to only allow UPPERCASE, it doesn't hurt to convert
