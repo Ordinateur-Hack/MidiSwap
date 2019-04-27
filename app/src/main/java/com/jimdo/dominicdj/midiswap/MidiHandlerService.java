@@ -13,6 +13,7 @@ import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
 import com.jimdo.dominicdj.midiswap.Utils.Conversion;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -130,7 +131,7 @@ public class MidiHandlerService extends IntentService {
      * It follows this procedure:
      * <ol>
      * <li>Receive the data from the USB-device (using the {@link MyUsbDeviceConnection})</li>
-     * <li>Process the data by getting the appropriate {@link OperationRules}</li>
+     * <li>Process the data by getting the appropriate {@link OperationRulesManager}</li>
      * <li>Send data back to the USB-device (using the {@link MyUsbDeviceConnection})</li>
      * </ol>
      */
@@ -158,95 +159,66 @@ public class MidiHandlerService extends IntentService {
         // regex "\\s+" matches sequence of one or more whitespace characters
         data = data.replaceAll("\\s+", "");
 
-        String[] rule = OperationRules.getRule();
-        String ifRecvRegex = rule[0];
-        String thenSendMsg = rule[1];
+        // Get the current OperationRules.
+        List<OperationRule> operationRules = OperationRulesManager.getOperationRules();
+        for (OperationRule operationRule : operationRules) {
+            // Work with one OperationRule.
+            String ifRecvMsg = operationRule.getIfRecvMsg();
+            String thenSendMsg = operationRule.getThenSendMsg();
 
-        // NOTES
-        /*Pattern p = Pattern.compile("9\\d [0-9a-fA-F]{2} [0-9a-fA-F]{2}"); // e. g. 90 XX XX
-        Matcher m = p.matcher(data);
-        if (m.find()) {
-            int startIndex = m.start();
-            String noteValue = data.substring(startIndex + 3, startIndex + 5);
-            Log.d(TAG, "Keyy pressed: " + data);
-            Log.d(TAG, "Note: " + noteValue);
+            // === How it works ===
+            // 1. Search for 'XX' pattern in ifRecvMsg and replace it with our regex pattern for hex messages.
+            //    Save the position of this 'XX' value.
+            // 2. Search the input data (received from USB-device) for ifRecvMsg.
+            //    If data was found, extract the data value (e. g. a controller value ranging from 0 to 127)
+            // 3. Search for 'XX' pattern in thenSendMsg and replace it with the data value of the previous step.
+            //    Finally, send the message to the USB-device.
+            // ====================
 
-            if (!data.substring(startIndex + 5, startIndex + 7).equals("00")) { // pressure
-                String msg = "1BB14A" + noteValue;
-                usbCommunicationManager.send(Conversion.toByteArray(msg));
+            // Work with ifRecvMsg (1.)
+            Matcher substituteX = Pattern.compile("XX").matcher(ifRecvMsg);
+            int subIndex = 0;
+            if (substituteX.find()) {
+                subIndex = substituteX.start();
+                ifRecvMsg = ifRecvMsg.replace("XX", "[\\da-fA-F]{2}");
+                Log.d(TAG, "Regex pattern for input: " + ifRecvMsg);
             }
-        }*/
 
-        // MODULATION WHEEL
-        /*Pattern p = Pattern.compile("(?i)B1 01 [\\da-f]{2}"); // e. g. B1 01 XX (00-7F)
-        Matcher m = p.matcher(data);
-        if (m.find()) {
-            String modulationData = m.group();
-            Log.d(TAG, "Found modulation wheel byte: " + modulationData);
-            String hexValue = modulationData.substring(6, 8);
-            String msg = "1BB14A" + hexValue;
-            usbCommunicationManager.send(Conversion.toByteArray(msg));
-        }*/
-
-        // CUSTOM
-        // REturn if user hasn't already set inputMsg or outputMsg.
-        if (ifRecvRegex == null || thenSendMsg == null) {
-            Log.d(TAG, "The user hasn't specified any OperationRules yet. The data is not going to be processed " +
-                    "further on.");
-            return;
-        }
-
-        // === How it works ===
-        // 1. Search for 'XX' pattern in ifRecvRegex and replace it with our regex pattern for hex messages.
-        //    Save the position of this 'XX' value.
-        // 2. Search the input data (received from USB-device) for ifRecvRegex.
-        //    If data was found, extract the data value (e. g. a controller value ranging from 0 to 127)
-        // 3. Search for 'XX' pattern in thenSendMsg and replace it with the data value of the previous step.
-        //    Finally, send the message to the USB-device.
-        // ====================
-
-        // Work with ifRecvRegex (1.)
-        Matcher substituteX = Pattern.compile("XX").matcher(ifRecvRegex);
-        int subIndex = 0;
-        if (substituteX.find()) {
-            subIndex = substituteX.start();
-            ifRecvRegex = ifRecvRegex.replace("XX", "[\\da-fA-F]{2}");
-            Log.d(TAG, "Regex pattern for input: " + ifRecvRegex);
-        }
-
-        // Work with data received from USB-device. (2.)
-        Matcher m = Pattern.compile(ifRecvRegex).matcher(data);
-        String matchedData = null;
-        boolean hitEnd = false;
-        while (!hitEnd) {
-            if (m.find()) {
-                matchedData = m.group();
-            } else {
-                // matcher.hitEnd() method refers to the input regex, not the input data,
-                // so we can't use this method here.
-                // Instead, we just check the boolean return value from matcher.find().
-                // We reached the end, if it returns false.
-                hitEnd = true;
+            // Work with data received from USB-device. (2.)
+            Matcher m = Pattern.compile(ifRecvMsg).matcher(data);
+            String matchedData = null;
+            boolean hitEnd = false;
+            while (!hitEnd) {
+                if (m.find()) {
+                    matchedData = m.group();
+                } else {
+                    // matcher.hitEnd() method refers to the input regex, not the input data,
+                    // so we can't use this method here.
+                    // Instead, we just check the boolean return value from matcher.find().
+                    // We reached the end, if it returns false.
+                    hitEnd = true;
+                }
             }
-        }
 
-        // If we have found an input sequence that matches the pattern, get the bytes
-        // at the position of the 'XX' pattern in ifRecvRegex. (still 2.)
-        if (matchedData != null) {
-            String dataValueToReplace = matchedData.substring(subIndex, subIndex + 2);
-            // Replace 'XX' in thenSendMsg with respective value in input data (received from USB-device)
-            // at the position of 'XX' in ifRecvRegex.
-            String msg = thenSendMsg.replace("XX", dataValueToReplace); // replace with previous data (3.)
-            // TODO: check for XX values in output
-            // TODO: check if there is after all a dataValuetoReplace (if there is XX in input)
-            // ==========================================================================
-            // 3. Send data back
-            // ==========================================================================
-            try {
-                myUsbDeviceConnection.send(Conversion.toByteArray(msg));
-            } catch (MyUsbDeviceConnection.CalledFromWrongThreadException e) {
-                e.printStackTrace();
+            // If we have found an input sequence that matches the pattern, get the bytes
+            // at the position of the 'XX' pattern in ifRecvMsg. (still 2.)
+            if (matchedData != null) {
+                String dataValueToReplace = matchedData.substring(subIndex, subIndex + 2);
+                // Replace 'XX' in thenSendMsg with respective value in input data (received from USB-device)
+                // at the position of 'XX' in ifRecvMsg.
+                String msg = thenSendMsg.replace("XX", dataValueToReplace); // replace with previous data (3.)
+                // TODO: check for XX values in output
+                // TODO: check if there is after all a dataValuetoReplace (if there is XX in input)
+                // ==========================================================================
+                // 3. Send data back
+                // ==========================================================================
+                try {
+                    myUsbDeviceConnection.send(Conversion.toByteArray(msg));
+                } catch (MyUsbDeviceConnection.CalledFromWrongThreadException e) {
+                    e.printStackTrace();
+                }
             }
+
         }
     }
 

@@ -28,16 +28,15 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
 
     private static final String TAG = Operations.class.getSimpleName();
 
-    private EditText inputMsgEditText;
-    private EditText outputMsgEditText;
+    private EditText ifRecvMsgEditText;
+    private EditText thenSendMsgEditText;
     private EditText customMsgEditText;
 
     private Spinner receiveMsgSpinner;
     private Spinner sendMsgSpinner;
 
-    // without whitespaces, extra characters, all in UPPERCASE
-    private String inputMsg;
-    private String outputMsg;
+    private OperationRule lastOperationRuleEditText;
+    private OperationRule lastOperationRuleSpinner;
 
     private boolean midiServiceStarted = false;
 
@@ -55,8 +54,8 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_operations);
 
-        inputMsgEditText = findViewById(R.id.edit_text_input_msg);
-        outputMsgEditText = findViewById(R.id.edit_text_output_msg);
+        ifRecvMsgEditText = findViewById(R.id.edit_text_input_msg);
+        thenSendMsgEditText = findViewById(R.id.edit_text_output_msg);
         customMsgEditText = findViewById(R.id.edit_text_custom_msg);
         restrictText();
         usbReceiver.register(this, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
@@ -68,7 +67,9 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         sendMsgSpinner = findViewById(R.id.spinner_send_msg);
         // load data for spinner
         initSpinner(receiveMsgSpinner, MidiControllerBuilder.getAvailableMidiControllers(true));
+        receiveMsgSpinner.setSelection(0); // TODO: do another way, not by guessing
         initSpinner(sendMsgSpinner, MidiControllerBuilder.getAvailableMidiControllers(false));
+        sendMsgSpinner.setSelection(2);
     }
 
     private void initSpinner(Spinner sendMsgSpinner, List<MidiController> midiControllersList) {
@@ -95,8 +96,8 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
                 }
             }
         };
-        inputMsgEditText.setFilters(filters);
-        outputMsgEditText.setFilters(filters);
+        ifRecvMsgEditText.setFilters(filters);
+        thenSendMsgEditText.setFilters(filters);
 
         InputFilter[] filtersCustomMsg = new InputFilter[2];
         filtersCustomMsg[0] = new InputFilter.AllCaps();
@@ -114,8 +115,8 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         customMsgEditText.setFilters(filtersCustomMsg);
 
         // Format in HEX code with whitespace after every second character
-        addTextWatcher(inputMsgEditText);
-        addTextWatcher(outputMsgEditText);
+        addTextWatcher(ifRecvMsgEditText);
+        addTextWatcher(thenSendMsgEditText);
         addTextWatcher(customMsgEditText);
     }
 
@@ -250,19 +251,37 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         if (parent.getId() == R.id.spinner_receive_msg || parent.getId() == R.id.spinner_send_msg) {
             MidiController midiController = (MidiController) parent.getItemAtPosition(position);
 
+            String msgRecv = null;
+            String msgSend = null;
             switch (parent.getId()) {
                 case R.id.spinner_receive_msg:
-                    String msgRecv = midiController.getMidiMessage().getHexMessage();
-                    OperationRules.updateRuleRecv(msgRecv);
-                    Toast.makeText(getApplicationContext(), "New recv msg: " + msgRecv,
-                            Toast.LENGTH_SHORT).show();
+                    msgRecv = midiController.getMidiMessage().getHexMessage();
+                    msgSend = ((MidiController) sendMsgSpinner.getSelectedItem()).getMidiMessage().getHexMessage();
                     break;
                 case R.id.spinner_send_msg:
-                    String msgSend = midiController.getMidiMessage().getHexMessage();
-                    OperationRules.updateRuleSend(msgSend);
-                    Toast.makeText(getApplicationContext(), "New send msg: " + msgSend,
-                            Toast.LENGTH_SHORT).show();
+                    msgSend = midiController.getMidiMessage().getHexMessage();
+                    msgRecv = ((MidiController) receiveMsgSpinner.getSelectedItem()).getMidiMessage().getHexMessage();
                     break;
+            }
+
+            if (msgRecv != null && msgSend != null) {
+                OperationRule operationRuleBeforeUpdate = lastOperationRuleSpinner;
+                try {
+                    OperationRule newOperationRule = new OperationRule(msgRecv, msgSend);
+                    boolean addOperationWorked = OperationRulesManager.addOperationRule(newOperationRule);
+                    if (addOperationWorked) {
+                        Toast.makeText(getApplicationContext(), newOperationRule.toString(), Toast.LENGTH_SHORT).show();
+                        // Delete old OperationRule.
+                        if (lastOperationRuleSpinner != null) {
+                            OperationRulesManager.deleteOperationRule(operationRuleBeforeUpdate);
+                        }
+                        lastOperationRuleSpinner = newOperationRule;
+                    }
+                } catch (IllegalArgumentException e) {
+                    // this should never happen due to null check in if(...)
+                    // if it happens after all, we just don't update the OperationRule, so don't do anything
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -272,32 +291,39 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         // ignore
     }
 
-    public void updateMsgFromView(View view) {
-        updateMsg();
-    }
-
-    private void updateMsg() {
+    public void updateMsgFromView(View v) {
         // Check user input
         // Remove all whitespaces and non-visible characters (e. g. tab, \n) and only use small caps
         // Although we already restricted the editorTexts to only allow UPPERCASE, it doesn't hurt to convert
         // everything to UPPERCASE letters again (Better safe than sorry...)
-        String inputMsgRaw = inputMsgEditText.getText().toString().replaceAll("\\s+", "").toUpperCase();
-        String outputMsgRaw = outputMsgEditText.getText().toString().replaceAll("\\s+", "").toUpperCase();
+        String ifRecvMsg = ifRecvMsgEditText.getText().toString().replaceAll("\\s+", "").toUpperCase();
+        String thenSendMsg = thenSendMsgEditText.getText().toString().replaceAll("\\s+", "").toUpperCase();
 
-        if (inputMsgRaw.length() < 6 || outputMsgRaw.length() < 6) {
+        if (ifRecvMsg.length() < 6 || thenSendMsg.length() < 6) {
             Toast.makeText(this, "Each of the massages has to be at least three bytes long!",
                     Toast.LENGTH_LONG).show();
         } else {
-            int inCount = countChar(inputMsgRaw, 'X');
+            int inCount = countChar(ifRecvMsg, 'X');
             if (inCount > 2) {
                 Toast.makeText(this, "Too many 'X's in your input message!",
                         Toast.LENGTH_LONG).show();
                 return;
             }
-            inputMsg = inputMsgRaw;
-            outputMsg = outputMsgRaw;
-            OperationRules.updateRule(inputMsg, outputMsg);
-            Toast.makeText(this, "Rule updated", Toast.LENGTH_SHORT).show();
+
+            try {
+                OperationRule newOperationRule = new OperationRule(ifRecvMsg, thenSendMsg);
+                boolean addOperationWorked = OperationRulesManager.addOperationRule(newOperationRule);
+                if (addOperationWorked) {
+                    Toast.makeText(this, "Rule updated via EditText", Toast.LENGTH_SHORT).show();
+                    // Delete old OperationRule.
+                    if (lastOperationRuleEditText != null) {
+                        OperationRulesManager.deleteOperationRule(lastOperationRuleEditText);
+                    }
+                    lastOperationRuleEditText = newOperationRule;
+                }
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            }
         }
     }
 

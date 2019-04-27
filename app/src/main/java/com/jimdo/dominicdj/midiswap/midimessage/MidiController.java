@@ -32,9 +32,7 @@ public class MidiController {
     public boolean equals(Object obj) {
         if (obj instanceof MidiController) {
             MidiController m = (MidiController) obj;
-            if (m.getName().equals(name) && m.getMidiMessage().equals(midiMessage)) {
-                return true;
-            }
+            return m.getName().equals(name) && m.getMidiMessage().equals(midiMessage);
         }
         return false;
     }
