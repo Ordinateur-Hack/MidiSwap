@@ -19,6 +19,7 @@ import android.widget.*;
 import com.jimdo.dominicdj.midiswap.USB.MyUsbDeviceConnection;
 import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
 import com.jimdo.dominicdj.midiswap.Utils.Conversion;
+import com.jimdo.dominicdj.midiswap.Utils.StringUtil;
 import com.jimdo.dominicdj.midiswap.midimessage.MidiController;
 import com.jimdo.dominicdj.midiswap.midimessage.MidiControllerBuilder;
 
@@ -303,7 +304,7 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
             Toast.makeText(this, "Each of the massages has to be at least three bytes long!",
                     Toast.LENGTH_LONG).show();
         } else {
-            int inCount = countChar(ifRecvMsg, 'X');
+            int inCount = StringUtil.countCharOccurrence(ifRecvMsg, 'X');
             if (inCount > 2) {
                 Toast.makeText(this, "Too many 'X's in your input message!",
                         Toast.LENGTH_LONG).show();
@@ -325,16 +326,6 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
                 e.printStackTrace();
             }
         }
-    }
-
-    private int countChar(String string, Character charToCompare) {
-        int count = 0;
-        for (Character c : string.toCharArray()) {
-            if (c == charToCompare) {
-                count++;
-            }
-        }
-        return count;
     }
 
     @Override
