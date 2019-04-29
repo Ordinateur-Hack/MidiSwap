@@ -64,8 +64,8 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         // ==========================================================================
         // Spinners
         // ==========================================================================
-        receiveMsgSpinner = findViewById(R.id.spinner_receive_msg);
-        sendMsgSpinner = findViewById(R.id.spinner_send_msg);
+        receiveMsgSpinner = findViewById(R.id.spinner_receive_controller);
+        sendMsgSpinner = findViewById(R.id.spinner_send_controller);
         // load data for spinner
         initSpinner(receiveMsgSpinner, MidiControllerBuilder.getAvailableMidiControllers(true));
         receiveMsgSpinner.setSelection(0); // TODO: do another way, not by guessing
@@ -73,12 +73,13 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         sendMsgSpinner.setSelection(2);
     }
 
-    private void initSpinner(Spinner sendMsgSpinner, List<MidiController> midiControllersList) {
-        ArrayAdapter<MidiController> adapterSend = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
-                midiControllersList);
-        adapterSend.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sendMsgSpinner.setAdapter(adapterSend);
-        sendMsgSpinner.setOnItemSelectedListener(this);
+    private void initSpinner(Spinner spinner, List<MidiController> midiControllersList) {
+        ArrayAdapter<MidiController> adapter = new CustomMidiControllerAdapter(this,
+                R.layout.midi_controller_spinner_item, R.id.tv_midi_controller_name,
+                android.R.layout.simple_spinner_dropdown_item, android.R.id.text1 /*text1 is the TextView
+                in the simple_spinner_dropdown_item, provided by the Android framework*/, midiControllersList);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(this);
     }
 
     private void restrictText() {
@@ -249,17 +250,17 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        if (parent.getId() == R.id.spinner_receive_msg || parent.getId() == R.id.spinner_send_msg) {
+        if (parent.getId() == R.id.spinner_receive_controller || parent.getId() == R.id.spinner_send_controller) {
             MidiController midiController = (MidiController) parent.getItemAtPosition(position);
 
             String msgRecv = null;
             String msgSend = null;
             switch (parent.getId()) {
-                case R.id.spinner_receive_msg:
+                case R.id.spinner_receive_controller:
                     msgRecv = midiController.getMidiMessage().getHexMessage();
                     msgSend = ((MidiController) sendMsgSpinner.getSelectedItem()).getMidiMessage().getHexMessage();
                     break;
-                case R.id.spinner_send_msg:
+                case R.id.spinner_send_controller:
                     msgSend = midiController.getMidiMessage().getHexMessage();
                     msgRecv = ((MidiController) receiveMsgSpinner.getSelectedItem()).getMidiMessage().getHexMessage();
                     break;
@@ -285,6 +286,11 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
                 }
             }
         }
+    }
+
+    public void onClickSettings(View view) {
+        Toast.makeText(getApplicationContext(), "Settings...", Toast.LENGTH_SHORT).show();
+        // TODO: implement
     }
 
     @Override

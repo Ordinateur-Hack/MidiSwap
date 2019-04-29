@@ -65,15 +65,15 @@
                 android:onClick="updateMsgFromView"/>
 
         <Spinner
-                android:id="@+id/spinner_receive_msg"
-                android:layout_height="40dp"
+                android:id="@+id/spinner_receive_controller"
+                android:layout_height="60dp"
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill">
         </Spinner>
 
         <Spinner
-                android:id="@+id/spinner_send_msg"
-                android:layout_height="40dp"
+                android:id="@+id/spinner_send_controller"
+                android:layout_height="60dp"
                 android:layout_columnWeight="1"
                 android:layout_gravity="fill">
         </Spinner>
