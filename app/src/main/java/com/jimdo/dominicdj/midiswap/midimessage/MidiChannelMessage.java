@@ -7,7 +7,7 @@ import static com.jimdo.dominicdj.midiswap.midimessage.MidiConstants.*;
 
 public class MidiChannelMessage extends MidiMessage {
 
-    List<MidiChannel> alternativeMidiChannels;
+    private MidiChannel standardMidiChannel;
 
     /**
      * @param midiChannelEvent
@@ -15,25 +15,16 @@ public class MidiChannelMessage extends MidiMessage {
      * @param firstDataByte
      * @param secondDataByte
      * @param isRecvChannel
-     * @param alternativeMidiChannels these MidiChannels are allowed to include the standardMidiChannel
      * @throws InvalidChannelNumberException
      */
     public MidiChannelMessage(MidiChannelEvent midiChannelEvent, MidiChannel standardMidiChannel,
-                              String firstDataByte, String secondDataByte, boolean isRecvChannel,
-                              List<MidiChannel> alternativeMidiChannels) throws InvalidChannelNumberException {
-        // Construct MidiChannelMessage by concatenating its parts.
+                              String firstDataByte, String secondDataByte, boolean isRecvChannel) throws InvalidChannelNumberException {
 
+        this.standardMidiChannel = standardMidiChannel;
+
+        // Construct MidiChannelMessage by concatenating its parts.
         String midiChannelByteRepresentation = standardMidiChannel.getByteRepresentation(isRecvChannel);
         String midiChannelEventByteRepresentation = midiChannelEvent.getByteRepresentation();
-
-        if (alternativeMidiChannels != null) {
-            this.alternativeMidiChannels = alternativeMidiChannels;
-            // Loop through every alternative MidiChannel to make sure that all of them are either Recv-Channels
-            // or Send-Channels. If this is not the case, .getByteRepresentation(...) will throw an error.
-            for (MidiChannel alternativeMidiChannel : alternativeMidiChannels) {
-                alternativeMidiChannel.getByteRepresentation(isRecvChannel);
-            }
-        }
 
         if (isRecvChannel) {
             // The Tyros attaches a swapped value-pair of MidiChannel and MidiChannelEvent to the beginning
@@ -53,13 +44,11 @@ public class MidiChannelMessage extends MidiMessage {
     }
 
     public MidiChannelMessage(MidiChannelEvent midiChannelEvent, MidiChannel standardMidiChannel,
-                              ControlChange controlChange, boolean isRecvChannel,
-                              List<MidiChannel> alternativeMidiChannels) throws InvalidChannelNumberException {
-        this(midiChannelEvent, standardMidiChannel, controlChange.getByteRepresentation(), "XX", isRecvChannel,
-                alternativeMidiChannels);
+                              ControlChange controlChange, boolean isRecvChannel) throws InvalidChannelNumberException {
+        this(midiChannelEvent, standardMidiChannel, controlChange.getByteRepresentation(), "XX", isRecvChannel);
     }
 
-    public List<MidiChannel> getAlternativeMidiChannels() {
-        return alternativeMidiChannels;
+    public MidiChannel getStandardMidiChannel() {
+        return standardMidiChannel;
     }
 }

@@ -17,6 +17,7 @@
             tools:text="Banana option to choose"/>
 
     <ImageButton
+            android:id="@+id/image_button_spinner_item_settings"
             android:onClick="onClickSettings"
             android:layout_width="50dp"
             android:layout_height="50dp"

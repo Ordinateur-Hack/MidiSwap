@@ -22,76 +22,64 @@ public class MidiControllerBuilder {
             // ==========================================================================
             // Midi Channel Message Controllers
             midiControllersList.add(
-                    new MidiController("Modulation",
+                    new MidiController("Modulation", shouldBeRecvControllers, MidiChannel.getVoiceMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.MODULATION, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.MODULATION, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Portamento Time",
+                    new MidiController("Portamento Time", shouldBeRecvControllers, MidiChannel.getVoiceMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.PORTAMENTO_TIME, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.PORTAMENTO_TIME, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Volume",
+                    new MidiController("Volume", shouldBeRecvControllers, MidiChannel.getVoiceMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.MAIN_VOLUME, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceAndStyleMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.MAIN_VOLUME, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Panpot",
+                    new MidiController("Panpot", shouldBeRecvControllers, MidiChannel.getVoiceAndStyleMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.PANPOT, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceAndStyleMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.PANPOT, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Harmonic Content",
+                    new MidiController("Harmonic Content", shouldBeRecvControllers, MidiChannel.getVoiceAndStyleMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.HARMONIC_CONTENT, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceAndStyleMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.HARMONIC_CONTENT, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Release Time",
+                    new MidiController("Release Time", shouldBeRecvControllers, MidiChannel.getVoiceMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.RELEASE_TIME, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.RELEASE_TIME, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Attack Time",
+                    new MidiController("Attack Time", shouldBeRecvControllers, MidiChannel.getVoiceMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.ATTACK_TIME, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.ATTACK_TIME, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Brightness",
+                    new MidiController("Brightness", shouldBeRecvControllers, MidiChannel.getVoiceAndStyleMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.BRIGHTNESS, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceAndStyleMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.BRIGHTNESS, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Decay Time",
+                    new MidiController("Decay Time", shouldBeRecvControllers, MidiChannel.getVoiceMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.DECAY_TIME, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.DECAY_TIME, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Reverb",
+                    new MidiController("Reverb", shouldBeRecvControllers, MidiChannel.getVoiceAndStyleMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.EFFECT_DEPHT_REVERB, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceAndStyleMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.EFFECT_DEPHT_REVERB, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Chorus",
+                    new MidiController("Chorus", shouldBeRecvControllers, MidiChannel.getVoiceAndStyleMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.EFFECT_DEPHT_CHORUS, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceAndStyleMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.EFFECT_DEPHT_CHORUS, shouldBeRecvControllers)));
 
             midiControllersList.add(
-                    new MidiController("Variation",
+                    new MidiController("Variation", shouldBeRecvControllers, MidiChannel.getVoiceAndStyleMidiChannels(),
                             new MidiChannelMessage(MidiChannelEvent.CONTROL_CHANGE,
-                                    MidiChannel.RIGHT_1, ControlChange.EFFECT_DEPHT_VARIATION, shouldBeRecvControllers,
-                                    MidiChannel.getVoiceAndStyleMidiChannels())));
+                                    MidiChannel.RIGHT_1, ControlChange.EFFECT_DEPHT_VARIATION, shouldBeRecvControllers)));
 
             // Other controllers
             // TODO: create new MidiControllers to use

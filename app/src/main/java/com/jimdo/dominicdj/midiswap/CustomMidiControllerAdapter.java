@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import com.jimdo.dominicdj.midiswap.midimessage.MidiController;
 
@@ -54,6 +55,7 @@ public class CustomMidiControllerAdapter extends ArrayAdapter<MidiController> {
             } else {
                 convertView = LayoutInflater.from(parent.getContext()).inflate(resource, parent, false);
                 holder.nameTextView = convertView.findViewById(textViewResourceId);
+                holder.spinnerItemSettingsImageButton = convertView.findViewById(R.id.image_button_spinner_item_settings);
             }
             // Associate the holder with the view for later lookup.
             convertView.setTag(holder);
@@ -66,12 +68,16 @@ public class CustomMidiControllerAdapter extends ArrayAdapter<MidiController> {
         // instead we can use holder.nameTextView
         MidiController midiController = getItem(position);
         holder.nameTextView.setText(midiController.getName());
+        if (holder.spinnerItemSettingsImageButton != null) {
+            holder.spinnerItemSettingsImageButton.setTag(R.id.TAG_MIDI_CONTROLLER, midiController);
+        }
 
         return convertView;
     }
 
     private static class MyViewHolder {
         private TextView nameTextView;
+        private ImageButton spinnerItemSettingsImageButton;
     }
 
 }

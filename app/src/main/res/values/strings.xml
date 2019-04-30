@@ -3,7 +3,16 @@
     <string name="select_device">Select a MIDI device</string>
     <string name="start">Start</string>
 
+    <!--MIDI Handler notifications -->
     <string name="midi_handler_notification_title">MIDI Handler</string>
     <string name="midi_handler_notification_message">MIDI processing with USB device is active.</string>
+
+    <!--Dialogs-->
+    <string name="dialog_title_pick_midi_channels">Pick MIDI channels</string>
+    <string name="ok_action_button">Ok</string>
+    <string name="cancel_action_button">Cancel</string>
+    <string name="neutral_action_button">Update</string>
+
+    <item type="id" name="TAG_MIDI_CONTROLLER"/>
 
 </resources>

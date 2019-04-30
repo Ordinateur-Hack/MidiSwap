@@ -1,12 +1,10 @@
 package com.jimdo.dominicdj.midiswap;
 
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -20,10 +18,14 @@ import com.jimdo.dominicdj.midiswap.USB.MyUsbDeviceConnection;
 import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
 import com.jimdo.dominicdj.midiswap.Utils.Conversion;
 import com.jimdo.dominicdj.midiswap.Utils.StringUtil;
+import com.jimdo.dominicdj.midiswap.midimessage.MidiChannelMessage;
 import com.jimdo.dominicdj.midiswap.midimessage.MidiController;
 import com.jimdo.dominicdj.midiswap.midimessage.MidiControllerBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.jimdo.dominicdj.midiswap.midimessage.MidiConstants.MidiChannel;
 
 public class Operations extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
@@ -289,8 +291,94 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
     }
 
     public void onClickSettings(View view) {
-        Toast.makeText(getApplicationContext(), "Settings...", Toast.LENGTH_SHORT).show();
-        // TODO: implement
+        Object obj = view.getTag(R.id.TAG_MIDI_CONTROLLER);
+        if (!(obj instanceof MidiController)) { // null check included
+            Log.d(TAG, "Couldn't handle onClickSettings correctly.");
+            return;
+        }
+        final MidiController midiController = (MidiController) obj;
+        final List<MidiChannel> alternativeMidiChannels = midiController.getAlternativeMidiChannels();
+
+        // ==========================================================================
+        // Construct the dialog
+        // ==========================================================================
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        // Set title.
+        builder.setTitle(R.string.dialog_title_pick_midi_channels);
+
+        // Set content area.
+        final List<Integer> selectedItemsIndex = new ArrayList<>(); // where we track the selected items
+        int size = alternativeMidiChannels.size();
+        final CharSequence[] itemsToShowInList = new CharSequence[size];
+        for (int i = 0; i < size; i++) {
+            itemsToShowInList[i] = alternativeMidiChannels.get(i).getReadableName();
+        }
+        builder.setMultiChoiceItems(itemsToShowInList, null, new DialogInterface.OnMultiChoiceClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                if (isChecked) {
+                    selectedItemsIndex.add(which);
+                } else if (selectedItemsIndex.contains(which)) {
+                    selectedItemsIndex.remove(which);
+                }
+            }
+        });
+
+        // Set action buttons.
+        builder
+                .setPositiveButton(R.string.ok_action_button, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // user clicked OK button
+                        // Do something, e. g. update OperationRules.
+                    }
+                })
+                .setNegativeButton(R.string.cancel_action_button, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // user cancelled the dialog
+                    }
+                })
+                .setNeutralButton(R.string.neutral_action_button, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Do nothing here because we override this button later to change the close behaviour.
+                        // However, we still need this because on older versions of Android unless we
+                        // pass a handler the button doesn't get instantiated.
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.show();
+        // Overriding the handler immediately after show is probably a better approach than OnShowListener
+        // see https://stackoverflow.com/a/15619098 for an explanation (we want to prevent any delay)
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // user clicked neutral button
+                List<MidiChannel> selectedMidiChannels = new ArrayList<>();
+                for (int index : selectedItemsIndex) {
+                    // We don't need to check for IndexOutOfBoundException because
+                    // the user can only select as many items as displayed and we filled our
+                    // dialog list with the alternativeMidiChannels-list.
+                    // However, for safety reasons, we do this nevertheless.
+                    try {
+                        MidiChannel newMidiChannel = alternativeMidiChannels.get(index);
+                        selectedMidiChannels.add(newMidiChannel);
+                    } catch (IndexOutOfBoundsException e) {
+                        e.printStackTrace();
+                    }
+                }
+                // TODO: we shouldn't rely that the MidiMessage we get is really a MidiChannelMessage.
+                //  Instead - since these spinners are made for MidiChannelMessages - we could
+                //  use MidiChannelMessage for the MidiController instead of generic MidiMessage
+                ((MidiChannelMessage) midiController.getMidiMessage()).getStandardMidiChannel();
+                // When the user hits the neutral button, we don't want the dialog to go away.
+                // That's why we don't call dialog.dismiss() here.
+            }
+        });
     }
 
     @Override

@@ -8,34 +8,36 @@ public class MidiConstants {
 
     public enum MidiChannel {
 
-        RIGHT_1("0", "1"),
-        RIGHT_2("1", "2"),
-        RIGHT_3("2", "3"),
-        LEFT("3", "4"),
+        RIGHT_1("Right 1", "0", "1"),
+        RIGHT_2("Right 2", "1", "2"),
+        RIGHT_3("Right 3", "2", "3"),
+        LEFT("Left", "3", "4"),
 
-        MULTI_PAD_1("4", null),
-        MULTI_PAD_2("5", null),
-        MULTI_PAD_3("6", null),
-        MULTI_PAD_4("7", null),
+        MULTI_PAD_1("MultiPad 1", "4", null),
+        MULTI_PAD_2("MultiPad 2", "5", null),
+        MULTI_PAD_3("MultiPad 3", "6", null),
+        MULTI_PAD_4("MultiPad 4", "7", null),
 
-        EXTRA_PART_1(null, "5"),
-        EXTRA_PART_2(null, "6"),
-        EXTRA_PART_3(null, "7"),
+        EXTRA_PART_1("ExtraPart 1", null, "5"),
+        EXTRA_PART_2("Extra Part 2", null, "6"),
+        EXTRA_PART_3("Extra Part 3", null, "7"),
 
-        STYLE_RHYTHM_1("8", "8"),
-        STYLE_RHYTHM_2("9", "9"),
-        STYLE_BASS("A", "A"),
-        STYLE_CHORD_1("B", "B"),
-        STYLE_CHORD_2("C", "C"),
-        STYLE_PAD("D", "D"),
-        STYLE_PHRASE_1("E", "E"),
-        STYLE_PHRASE_2("F", "F");
+        STYLE_RHYTHM_1("Style Rhy 1", "8", "8"),
+        STYLE_RHYTHM_2("Style Rhy 2", "9", "9"),
+        STYLE_BASS("Style Bass", "A", "A"),
+        STYLE_CHORD_1("Style Chord 1", "B", "B"),
+        STYLE_CHORD_2("Style Chord 2", "C", "C"),
+        STYLE_PAD("Style Pad", "D", "D"),
+        STYLE_PHRASE_1("Style Phrase 1", "E", "E"),
+        STYLE_PHRASE_2("Style Phrase 2", "F", "F");
 
 
+        private String readableName;
         private String channelNumberRcv;
         private String channelNumberSend;
 
-        MidiChannel(String channelNumberRcv, String channelNumberSend) {
+        MidiChannel(String readableName, String channelNumberRcv, String channelNumberSend) {
+            this.readableName = readableName;
             this.channelNumberRcv = channelNumberRcv;
             this.channelNumberSend = channelNumberSend;
         }
@@ -52,6 +54,10 @@ public class MidiConstants {
                 }
                 return channelNumberSend;
             }
+        }
+
+        public String getReadableName() {
+            return readableName;
         }
 
         public static List<MidiChannel> getVoiceMidiChannels() {
