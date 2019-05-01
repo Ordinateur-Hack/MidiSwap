@@ -17,12 +17,11 @@ import android.widget.*;
 import com.jimdo.dominicdj.midiswap.USB.MyUsbDeviceConnection;
 import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
 import com.jimdo.dominicdj.midiswap.Utils.Conversion;
-import com.jimdo.dominicdj.midiswap.Utils.StringUtil;
+import com.jimdo.dominicdj.midiswap.midimessage.MidiChannelController;
 import com.jimdo.dominicdj.midiswap.midimessage.MidiChannelMessage;
-import com.jimdo.dominicdj.midiswap.midimessage.MidiController;
+import com.jimdo.dominicdj.midiswap.midimessage.MidiConstants;
 import com.jimdo.dominicdj.midiswap.midimessage.MidiControllerBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.jimdo.dominicdj.midiswap.midimessage.MidiConstants.MidiChannel;
@@ -38,6 +37,7 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
     private Spinner receiveMsgSpinner;
     private Spinner sendMsgSpinner;
 
+    private OperationRule myOperationRule; // TODO: later we should ask for the current OperationRule in a RecyclerView
     private OperationRule lastOperationRuleEditText;
     private OperationRule lastOperationRuleSpinner;
 
@@ -66,6 +66,9 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         // ==========================================================================
         // Spinners
         // ==========================================================================
+        myOperationRule = new OperationRule();
+        OperationRulesManager.addOperationRule(myOperationRule);
+
         receiveMsgSpinner = findViewById(R.id.spinner_receive_controller);
         sendMsgSpinner = findViewById(R.id.spinner_send_controller);
         // load data for spinner
@@ -75,11 +78,11 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         sendMsgSpinner.setSelection(2);
     }
 
-    private void initSpinner(Spinner spinner, List<MidiController> midiControllersList) {
-        ArrayAdapter<MidiController> adapter = new CustomMidiControllerAdapter(this,
+    private void initSpinner(Spinner spinner, List<MidiChannelController> midiChannelControllersList) {
+        ArrayAdapter<MidiChannelController> adapter = new CustomMidiControllerAdapter(this,
                 R.layout.midi_controller_spinner_item, R.id.tv_midi_controller_name,
                 android.R.layout.simple_spinner_dropdown_item, android.R.id.text1 /*text1 is the TextView
-                in the simple_spinner_dropdown_item, provided by the Android framework*/, midiControllersList);
+                in the simple_spinner_dropdown_item, provided by the Android framework*/, midiChannelControllersList);
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(this);
     }
@@ -253,51 +256,46 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         if (parent.getId() == R.id.spinner_receive_controller || parent.getId() == R.id.spinner_send_controller) {
-            MidiController midiController = (MidiController) parent.getItemAtPosition(position);
+            MidiChannelController midiChannelController = (MidiChannelController) parent.getItemAtPosition(position);
 
-            String msgRecv = null;
-            String msgSend = null;
+            MidiChannelMessage midiChannelMessage = null;
             switch (parent.getId()) {
                 case R.id.spinner_receive_controller:
-                    msgRecv = midiController.getMidiMessage().getHexMessage();
-                    msgSend = ((MidiController) sendMsgSpinner.getSelectedItem()).getMidiMessage().getHexMessage();
+                    midiChannelMessage = midiChannelController.getStandardMidiMessage();
+                    switchToNewMidiChannelMessage(midiChannelMessage, true);
                     break;
                 case R.id.spinner_send_controller:
-                    msgSend = midiController.getMidiMessage().getHexMessage();
-                    msgRecv = ((MidiController) receiveMsgSpinner.getSelectedItem()).getMidiMessage().getHexMessage();
+                    midiChannelMessage = midiChannelController.getStandardMidiMessage();
+                    switchToNewMidiChannelMessage(midiChannelMessage, false);
                     break;
-            }
-
-            if (msgRecv != null && msgSend != null) {
-                OperationRule operationRuleBeforeUpdate = lastOperationRuleSpinner;
-                try {
-                    OperationRule newOperationRule = new OperationRule(msgRecv, msgSend);
-                    boolean addOperationWorked = OperationRulesManager.addOperationRule(newOperationRule);
-                    if (addOperationWorked) {
-                        Toast.makeText(getApplicationContext(), newOperationRule.toString(), Toast.LENGTH_SHORT).show();
-                        // Delete old OperationRule.
-                        if (lastOperationRuleSpinner != null) {
-                            OperationRulesManager.deleteOperationRule(operationRuleBeforeUpdate);
-                        }
-                        lastOperationRuleSpinner = newOperationRule;
-                    }
-                } catch (IllegalArgumentException e) {
-                    // this should never happen due to null check in if(...)
-                    // if it happens after all, we just don't update the OperationRule, so don't do anything
-                    e.printStackTrace();
-                }
             }
         }
     }
 
+    private void switchToNewMidiChannelMessage(MidiChannelMessage midiChannelMessage, boolean isRecvMessage) {
+        myOperationRule.removeAllMidiChannelMessages(isRecvMessage);
+        // Construct a new MidiChannelMessage for the OperationRule
+        myOperationRule.addMidiChannelMessage(midiChannelMessage, isRecvMessage);
+        Toast.makeText(getApplicationContext(), myOperationRule.toString(), Toast.LENGTH_SHORT).show();
+    }
+
     public void onClickSettings(View view) {
         Object obj = view.getTag(R.id.TAG_MIDI_CONTROLLER);
-        if (!(obj instanceof MidiController)) { // null check included
+        if (!(obj instanceof MidiChannelController)) { // null check included
             Log.d(TAG, "Couldn't handle onClickSettings correctly.");
             return;
         }
-        final MidiController midiController = (MidiController) obj;
-        final List<MidiChannel> alternativeMidiChannels = midiController.getAlternativeMidiChannels();
+
+        // TODO: later ask the RecyclerView for the current OperationRule where the user pressed the 'settings'-icon;
+        //  decide whether user clicked on recv-side or send-side of OperationRule (with the help of RecyclerView)
+        // INITIALIZE NEW OPERATION_RULES
+        // what to do when the user inits a new OperationRule?
+        // at the moment: just set our only reference to a new standard OperationRule
+        // later we will introduce a RecyclerView to add multiple OperationRules
+
+        final MidiChannelController midiChannelController = (MidiChannelController) obj;
+        final List<MidiChannel> selectedMidiChannels = midiChannelController.getSelectedMidiChannels();
+        final List<MidiChannel> allAvailableMidiChannels = midiChannelController.getAllAvailableMidiChannels();
 
         // ==========================================================================
         // Construct the dialog
@@ -308,19 +306,30 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         builder.setTitle(R.string.dialog_title_pick_midi_channels);
 
         // Set content area.
-        final List<Integer> selectedItemsIndex = new ArrayList<>(); // where we track the selected items
-        int size = alternativeMidiChannels.size();
-        final CharSequence[] itemsToShowInList = new CharSequence[size];
+        final int size = allAvailableMidiChannels.size();
+        final CharSequence[] items = new CharSequence[size];
+        final boolean[] checkedItems = new boolean[size];
+
         for (int i = 0; i < size; i++) {
-            itemsToShowInList[i] = alternativeMidiChannels.get(i).getReadableName();
+            MidiChannel midiChannel = allAvailableMidiChannels.get(i);
+            items[i] = midiChannel.getReadableName();
+            // Check an item in the list if it is selected according to the MidiChannelController.
+            if (selectedMidiChannels.contains(midiChannel)) {
+                checkedItems[i] = true;
+            }
         }
-        builder.setMultiChoiceItems(itemsToShowInList, null, new DialogInterface.OnMultiChoiceClickListener() {
+
+        // -- Fill the dialog with checked options of the MidiController and then
+        // -- track which items are checked or unchecked during runtime (by the user).
+        builder.setMultiChoiceItems(items, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which, boolean isChecked) {
                 if (isChecked) {
-                    selectedItemsIndex.add(which);
-                } else if (selectedItemsIndex.contains(which)) {
-                    selectedItemsIndex.remove(which);
+                    // item is checked now (and wasn't checked before)
+                    checkedItems[which] = true; // user selected item
+                } else {
+                    // item is not checked now (but was checked before)
+                    checkedItems[which] = false; // user deselected item
                 }
             }
         });
@@ -330,22 +339,23 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
                 .setPositiveButton(R.string.ok_action_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // user clicked OK button
-                        // Do something, e. g. update OperationRules.
+                        updateCheckedItemsAndOperationRule(midiChannelController, allAvailableMidiChannels,
+                                selectedMidiChannels, checkedItems);
                     }
                 })
                 .setNegativeButton(R.string.cancel_action_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // user cancelled the dialog
+                        // do nothing when the user cancelled the dialog
                     }
                 })
                 .setNeutralButton(R.string.neutral_action_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // Do nothing here because we override this button later to change the close behaviour.
-                        // However, we still need this because on older versions of Android unless we
-                        // pass a handler the button doesn't get instantiated.
+                        // see https://stackoverflow.com/a/15619098
+                        // Do nothing here because we override the OnClickListener for this button later to change the
+                        // close behaviour. However, we still need to pass an OnClickListener here because on older
+                        // versions of Android the button doesn't get instantiated unless we pass a handler for it.
                     }
                 });
 
@@ -357,28 +367,67 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // user clicked neutral button
-                List<MidiChannel> selectedMidiChannels = new ArrayList<>();
-                for (int index : selectedItemsIndex) {
-                    // We don't need to check for IndexOutOfBoundException because
-                    // the user can only select as many items as displayed and we filled our
-                    // dialog list with the alternativeMidiChannels-list.
-                    // However, for safety reasons, we do this nevertheless.
+                updateCheckedItemsAndOperationRule(midiChannelController, allAvailableMidiChannels,
+                        selectedMidiChannels, checkedItems);
+            }
+        });
+    }
+
+    private void updateCheckedItemsAndOperationRule(MidiChannelController midiChannelController,
+                                                    List<MidiChannel> allAvailableMidiChannels,
+                                                    List<MidiChannel> selectedMidiChannels,
+                                                    boolean[] checkedItems) {
+        // Go through every item in the list and check if is newly checked or unchecked.
+        for (int i = 0; i < allAvailableMidiChannels.size(); i++) {
+            // We don't need to check for IndexOutOfBoundException because
+            // the user can only select as many items as displayed and we filled our
+            // dialog list with the alternativeMidiChannels-list.
+            // However, for safety reasons, we do this nevertheless.
+            MidiChannel midiChannelToDiscuss = allAvailableMidiChannels.get(i);
+            boolean wasChecked = selectedMidiChannels.contains(midiChannelToDiscuss);
+            boolean isChecked = checkedItems[i];
+
+            // Adjust the OperationRule according to the newly selected/unselected MidiMessages. Ignore ones that
+            // have been or haven't been selected beforehand (before the user opened the dialog) in order to reduce
+            // overhead, i. e. we don't do anything, if the state of an item hasn't changed.
+            if (isChecked) {
+                if (!wasChecked) {
+                    // item is checked now and wasn't checked before
+                    selectedMidiChannels.add(midiChannelToDiscuss);
+                    midiChannelController.selectMidiChannel(midiChannelToDiscuss);
+                    boolean isRecvController = midiChannelController.isRecvController();
+
                     try {
-                        MidiChannel newMidiChannel = alternativeMidiChannels.get(index);
-                        selectedMidiChannels.add(newMidiChannel);
-                    } catch (IndexOutOfBoundsException e) {
+                        // Construct a new MidiChannelMessage for the OperationRule.
+                        MidiChannelMessage newMidiChannelMessage =
+                                midiChannelController.getStandardMidiMessage().copyWithNewMidiChannel(midiChannelToDiscuss);
+                        myOperationRule.addMidiChannelMessage(newMidiChannelMessage, isRecvController);
+                    } catch (CloneNotSupportedException e) {
+                        e.printStackTrace();
+                    } catch (MidiConstants.InvalidChannelNumberException e) {
                         e.printStackTrace();
                     }
                 }
-                // TODO: we shouldn't rely that the MidiMessage we get is really a MidiChannelMessage.
-                //  Instead - since these spinners are made for MidiChannelMessages - we could
-                //  use MidiChannelMessage for the MidiController instead of generic MidiMessage
-                ((MidiChannelMessage) midiController.getMidiMessage()).getStandardMidiChannel();
-                // When the user hits the neutral button, we don't want the dialog to go away.
-                // That's why we don't call dialog.dismiss() here.
+            } else if (wasChecked) {
+                // item is not checked now, but was checked before
+                selectedMidiChannels.remove(midiChannelToDiscuss);
+                midiChannelController.unselectMidiChannel(midiChannelToDiscuss);
+                boolean isRecvController = midiChannelController.isRecvController();
+                try {
+                    // Construct the MidiChannelMessage for that the OperationRule knows which Message to delete.
+                    MidiChannelMessage midiChannelMessageToDelete =
+                            midiChannelController.getStandardMidiMessage().copyWithNewMidiChannel(midiChannelToDiscuss);
+                    myOperationRule.removeMidiChannelMessage(midiChannelMessageToDelete, isRecvController);
+                } catch (CloneNotSupportedException e) {
+                    e.printStackTrace();
+                } catch (MidiConstants.InvalidChannelNumberException e) {
+                    e.printStackTrace();
+                }
             }
-        });
+        }
+        Toast.makeText(getApplicationContext(), myOperationRule.toString(), Toast.LENGTH_SHORT).show();
+        // This method is (among others) called, when the user clicks on the neutral button.
+        // In that case we don't want the dialog to go away, so that's why we don't call dialog.dismiss() here.
     }
 
     @Override
@@ -387,7 +436,9 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
     }
 
     public void updateMsgFromView(View v) {
-        // Check user input
+        // at the moment: do nothing
+
+        /*// Check user input
         // Remove all whitespaces and non-visible characters (e. g. tab, \n) and only use small caps
         // Although we already restricted the editorTexts to only allow UPPERCASE, it doesn't hurt to convert
         // everything to UPPERCASE letters again (Better safe than sorry...)
@@ -419,7 +470,7 @@ public class Operations extends AppCompatActivity implements AdapterView.OnItemS
             } catch (IllegalArgumentException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
     }
 
     @Override

@@ -11,11 +11,11 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import com.jimdo.dominicdj.midiswap.midimessage.MidiController;
+import com.jimdo.dominicdj.midiswap.midimessage.MidiChannelController;
 
 import java.util.List;
 
-public class CustomMidiControllerAdapter extends ArrayAdapter<MidiController> {
+public class CustomMidiControllerAdapter extends ArrayAdapter<MidiChannelController> {
 
     private int resource;
     private int textViewResourceId;
@@ -24,7 +24,7 @@ public class CustomMidiControllerAdapter extends ArrayAdapter<MidiController> {
 
     public CustomMidiControllerAdapter(@NonNull Context context, @LayoutRes int resource, @IdRes int textViewResourceId,
                                        @LayoutRes int resourceDropdown, @IdRes int textViewDropdownResourceId,
-                                       @NonNull List<MidiController> objects) {
+                                       @NonNull List<MidiChannelController> objects) {
         super(context, resource, textViewResourceId, objects);
         this.resource = resource;
         this.textViewResourceId = textViewResourceId;
@@ -66,10 +66,10 @@ public class CustomMidiControllerAdapter extends ArrayAdapter<MidiController> {
 
         // no findViewById here because we used the view holder pattern
         // instead we can use holder.nameTextView
-        MidiController midiController = getItem(position);
-        holder.nameTextView.setText(midiController.getName());
+        MidiChannelController midiChannelController = getItem(position);
+        holder.nameTextView.setText(midiChannelController.getName());
         if (holder.spinnerItemSettingsImageButton != null) {
-            holder.spinnerItemSettingsImageButton.setTag(R.id.TAG_MIDI_CONTROLLER, midiController);
+            holder.spinnerItemSettingsImageButton.setTag(R.id.TAG_MIDI_CONTROLLER, midiChannelController);
         }
 
         return convertView;
