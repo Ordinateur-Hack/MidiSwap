@@ -12,6 +12,8 @@ import com.jimdo.dominicdj.midiswap.USB.MyUsbDeviceConnection;
 import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
 import com.jimdo.dominicdj.midiswap.Utils.Conversion;
 import com.jimdo.dominicdj.midiswap.midimessage.MidiChannelMessage;
+import com.jimdo.dominicdj.midiswap.operationrules.OperationRule;
+import com.jimdo.dominicdj.midiswap.operationrules.OperationRulesManagerOld;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -132,7 +134,7 @@ public class MidiHandlerService extends IntentService {
      * It follows this procedure:
      * <ol>
      * <li>Receive the data from the USB-device (using the {@link MyUsbDeviceConnection})</li>
-     * <li>Process the data by getting the appropriate {@link OperationRulesManager}</li>
+     * <li>Process the data by getting the appropriate {@link OperationRulesManagerOld}</li>
      * <li>Send data back to the USB-device (using the {@link MyUsbDeviceConnection})</li>
      * </ol>
      */
@@ -162,7 +164,7 @@ public class MidiHandlerService extends IntentService {
         data = data.replaceAll("\\s+", "");
 
         // Go through all OperationRules.
-        List<OperationRule> operationRules = OperationRulesManager.getOperationRules();
+        List<OperationRule> operationRules = OperationRule.OperationRulesManager.getOperationRules();
         Log.d(TAG, "OperationRules are: " + operationRules.toString());
         for (OperationRule operationRule : operationRules) {
             // Go through all receive MidiMessages.

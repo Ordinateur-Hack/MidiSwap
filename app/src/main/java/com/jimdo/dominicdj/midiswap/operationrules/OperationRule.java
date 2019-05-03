@@ -1,4 +1,4 @@
-package com.jimdo.dominicdj.midiswap;
+package com.jimdo.dominicdj.midiswap.operationrules;
 
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -14,14 +14,15 @@ public class OperationRule {
     private List<MidiChannelMessage> midiRecvMessages = new ArrayList<>(3);
     private List<MidiChannelMessage> midiSendMessages = new ArrayList<>(3);
 
-    public OperationRule() {
+    private OperationRule() {
+        // the MidiChannelMessages are added later on; we just need an empty OperationRule now
     }
 
-    // not needed at the moment
+    /*// not needed at the moment
     public OperationRule(@NonNull List<MidiChannelMessage> midiRecvMessages, @NonNull List<MidiChannelMessage> midiSendMessages) {
         addMessages(midiRecvMessages, this.midiRecvMessages);
         addMessages(midiSendMessages, this.midiSendMessages);
-    }
+    }*/
 
     // ==========================================================================
     // Getters
@@ -127,4 +128,22 @@ public class OperationRule {
         return false;
     }
 
+
+    public static class OperationRulesManager {
+
+        private static List<OperationRule> operationRules = new ArrayList<>(5);
+
+        public static OperationRule getNewOperationRule() {
+            OperationRule newOperationRule = new OperationRule();
+            operationRules.add(newOperationRule);
+            return newOperationRule;
+        }
+
+        public static List<OperationRule> getOperationRules() {
+            return operationRules;
+        }
+    }
+
 }
+
+

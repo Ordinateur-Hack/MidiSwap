@@ -1,16 +1,15 @@
-package com.jimdo.dominicdj.midiswap;
+package com.jimdo.dominicdj.midiswap.operationrules;
 
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public final class OperationRulesManager {
+public final class OperationRulesManagerOld {
 
     private static List<OperationRule> operationRules = new ArrayList<>(5);
 
-    private static final String TAG = OperationRulesManager.class.getSimpleName();
-
+    private static final String TAG = OperationRulesManagerOld.class.getSimpleName();
 
     public static List<OperationRule> getOperationRules() {
         return operationRules;

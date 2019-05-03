@@ -18,7 +18,7 @@
 
     <ImageButton
             android:id="@+id/image_button_spinner_item_settings"
-            android:onClick="onClickSettings"
+
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_gravity="center_vertical"
@@ -27,5 +27,6 @@
             android:padding="5dp"
             android:src="@drawable/ic_settings_black_24dp"
             android:background="@android:color/transparent"/>
+    <!--android:onClick="onClickSettings"-->
 
 </LinearLayout>

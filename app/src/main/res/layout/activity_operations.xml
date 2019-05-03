@@ -6,15 +6,21 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:keepScreenOn="true">
 
+    <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view_rules"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"/>
+
     <GridLayout
             android:id="@+id/grid_layout_operations"
+            android:layout_below="@id/recycler_view_rules"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:columnCount="2"
             tools:context=".Operations"
             android:padding="16dp"
-            >
+    >
 
         <Button
                 android:id="@+id/btn_send_on"
@@ -63,20 +69,6 @@
                 android:textSize="16sp"
                 android:text="OK"
                 android:onClick="updateMsgFromView"/>
-
-        <Spinner
-                android:id="@+id/spinner_receive_controller"
-                android:layout_height="60dp"
-                android:layout_columnWeight="1"
-                android:layout_gravity="fill">
-        </Spinner>
-
-        <Spinner
-                android:id="@+id/spinner_send_controller"
-                android:layout_height="60dp"
-                android:layout_columnWeight="1"
-                android:layout_gravity="fill">
-        </Spinner>
 
         <Button
                 android:layout_columnWeight="1"

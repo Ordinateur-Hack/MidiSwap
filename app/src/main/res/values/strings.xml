@@ -13,6 +13,7 @@
     <string name="cancel_action_button">Cancel</string>
     <string name="neutral_action_button">Update</string>
 
-    <item type="id" name="TAG_MIDI_CONTROLLER"/>
+    <item type="id" name="TAG_MIDI_CHANNEL_CONTROLLER"/>
+    <item type="id" name="TAG_SPINNER_OPERATION_RULE"/>
 
 </resources>
