@@ -1,33 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="horizontal">
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
     <TextView
             android:id="@+id/tv_midi_controller_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            style="?android:attr/spinnerItemStyle"
-            android:layout_gravity="center_vertical"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:gravity="center_vertical"
+
+            style="?android:attr/spinnerItemStyle"
             android:singleLine="true"
             android:ellipsize="marquee"
-            tools:text="Banana option to choose"/>
+            android:marqueeRepeatLimit="marquee_forever"
+            tools:text="Rhythm is a dancer"/>
+    <!-- focusableInTouchMode should be set to true in order to "select" this TextView
+    and allow marquee. See https://stackoverflow.com/a/18096553-->
+    <!--    see http://android-coding.blogspot.com/2014/01/implement-auto-scroll-marquee-textview_28.html-->
 
     <ImageButton
             android:id="@+id/image_button_item_settings"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_gravity="end|center_vertical"
+            android:padding="9dp"
 
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
-            android:padding="10dp"
             android:src="@drawable/ic_settings_black_24dp"
             android:scaleType="fitCenter"
-            android:background="?android:attr/selectableItemBackground"/>
-    <!--android:onClick="onClickSettings"-->
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="Settings icon to adjust MidiChannels"/>
 
 </LinearLayout>

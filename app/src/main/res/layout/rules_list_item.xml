@@ -1,64 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<GridLayout
+<LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:orientation="horizontal"
-        android:columnCount="5">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
 
     <Spinner
             android:id="@+id/spinner_recv"
-            android:layout_height="60dp"
-            android:layout_columnWeight="1"
-            android:layout_gravity="fill">
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+
+            tools:listitem="@layout/spinner_item">
     </Spinner>
 
     <!--Line separator-->
     <View
+            android:id="@+id/view"
             android:layout_width="1dp"
-            android:layout_height="30dp"
+            android:layout_height="25dp"
             android:layout_gravity="center_vertical"
-            android:background="#858585"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"/>
+
+            android:background="#858585"/>
 
     <Spinner
             android:id="@+id/spinner_send"
-            android:layout_height="60dp"
-            android:layout_columnWeight="1"
-            android:layout_gravity="fill">
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+
+            tools:listitem="@layout/spinner_item">
     </Spinner>
 
-    <!--Line separator-->
     <View
+            android:id="@+id/view_before_delete_button"
             android:layout_width="2dp"
-            android:layout_height="50dp"
+            android:layout_height="30dp"
             android:layout_gravity="center_vertical"
-            android:background="#858585"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"/>
+
+            android:background="#858585"/>
 
     <ImageButton
             android:id="@+id/image_button_rule_delete"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center_vertical"
-            android:padding="12dp"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:padding="7dp"
+
             android:src="@drawable/ic_delete_black_24dp"
             android:scaleType="fitCenter"
             android:background="?android:attr/selectableItemBackground"
-    />
+            android:contentDescription="Delete icon"/>
 
     <!--Line separator-->
-    <View
+    <!--<View
             android:layout_row="1"
             android:layout_columnSpan="5"
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="#dadada"
-            android:layout_marginTop="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"/>
+            android:layout_margin="8dp"/>-->
 
-</GridLayout>
+</LinearLayout>

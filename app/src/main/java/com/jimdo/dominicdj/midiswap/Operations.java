@@ -7,8 +7,8 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -19,7 +19,9 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 import com.jimdo.dominicdj.midiswap.USB.MyUsbDeviceConnection;
 import com.jimdo.dominicdj.midiswap.USB.UsbCommunicationManager;
@@ -34,8 +36,8 @@ import java.util.List;
 
 public class Operations extends AppCompatActivity {
 
-    private EditText ifRecvMsgEditText;
-    private EditText thenSendMsgEditText;
+    //    private EditText ifRecvMsgEditText;
+    //    private EditText thenSendMsgEditText;
     private EditText customMsgEditText;
 
     private static RulesAdapter rulesAdapter;
@@ -61,8 +63,8 @@ public class Operations extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_operations);
 
-        ifRecvMsgEditText = findViewById(R.id.edit_text_input_msg);
-        thenSendMsgEditText = findViewById(R.id.edit_text_output_msg);
+//        ifRecvMsgEditText = findViewById(R.id.edit_text_input_msg);
+//        thenSendMsgEditText = findViewById(R.id.edit_text_output_msg);
         customMsgEditText = findViewById(R.id.edit_text_custom_msg);
         restrictText();
         usbReceiver.register(this, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
@@ -98,6 +100,8 @@ public class Operations extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startMidiHandler();
+                ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) addFab.getLayoutParams();
+                layoutParams.bottomToTop = R.id.fab_stop_midi_handler;
                 ((FloatingActionButton) v).hide();
                 stopMidiHandlerFab.show();
             }
@@ -107,6 +111,8 @@ public class Operations extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 stopMidiHandler();
+                ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) addFab.getLayoutParams();
+                layoutParams.bottomToTop = R.id.fab_start_midi_handler;
                 ((FloatingActionButton) v).hide();
                 startMidiHandlerFab.show();
             }
@@ -162,8 +168,8 @@ public class Operations extends AppCompatActivity {
                 }
             }
         };
-        ifRecvMsgEditText.setFilters(filters);
-        thenSendMsgEditText.setFilters(filters);
+//        ifRecvMsgEditText.setFilters(filters);
+//        thenSendMsgEditText.setFilters(filters);
 
         InputFilter[] filtersCustomMsg = new InputFilter[2];
         filtersCustomMsg[0] = new InputFilter.AllCaps();
@@ -181,8 +187,8 @@ public class Operations extends AppCompatActivity {
         customMsgEditText.setFilters(filtersCustomMsg);
 
         // Format in HEX code with whitespace after every second character
-        addTextWatcher(ifRecvMsgEditText);
-        addTextWatcher(thenSendMsgEditText);
+//        addTextWatcher(ifRecvMsgEditText);
+//        addTextWatcher(thenSendMsgEditText);
         addTextWatcher(customMsgEditText);
     }
 
