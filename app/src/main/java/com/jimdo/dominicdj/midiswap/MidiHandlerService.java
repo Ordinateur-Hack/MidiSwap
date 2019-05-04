@@ -71,7 +71,7 @@ public class MidiHandlerService extends IntentService {
         }
         Notification notification = notificationBuilder
                 .setContentIntent(myActivityPendingIntent)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_import_export_black_24dp)
                 .setContentTitle(getText(R.string.midi_handler_notification_title))
                 .setContentText(getText(R.string.midi_handler_notification_message))
                 .build();
