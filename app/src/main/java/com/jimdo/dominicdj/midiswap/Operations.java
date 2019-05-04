@@ -40,6 +40,8 @@ public class Operations extends AppCompatActivity {
 
     private static RulesAdapter rulesAdapter;
     private FloatingActionButton addFab;
+    private FloatingActionButton startMidiHandlerFab;
+    private FloatingActionButton stopMidiHandlerFab;
 
     private boolean midiServiceStarted = false;
 
@@ -88,6 +90,25 @@ public class Operations extends AppCompatActivity {
                 rulesAdapter.addItem(generateBasicViewModel(spinnerListener));
                 // TODO: only for debug purpose
                 Toast.makeText(getApplicationContext(), "Added rule", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        startMidiHandlerFab = findViewById(R.id.fab_start_midi_handler);
+        startMidiHandlerFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startMidiHandler();
+                ((FloatingActionButton) v).hide();
+                stopMidiHandlerFab.show();
+            }
+        });
+        stopMidiHandlerFab = findViewById(R.id.fab_stop_midi_handler);
+        stopMidiHandlerFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                stopMidiHandler();
+                ((FloatingActionButton) v).hide();
+                startMidiHandlerFab.show();
             }
         });
 
@@ -192,7 +213,7 @@ public class Operations extends AppCompatActivity {
         editText.addTextChangedListener(hexTextWatcherOut);
     }
 
-    public void startMidiHandler(View v) {
+    public void startMidiHandler() {
         // start the MidiService only one time, even when user presses button repeatedly
         // TODO: grey out button in this case (midiService already started)
         if (!midiServiceStarted) {
@@ -206,10 +227,6 @@ public class Operations extends AppCompatActivity {
             Log.d(TAG, "Midi Handler was started. Service is: " + serviceName);
             midiServiceStarted = true;
         }
-    }
-
-    public void stopMidiHandlerFromView(View view) {
-        stopMidiHandler();
     }
 
     private void stopMidiHandler() {
