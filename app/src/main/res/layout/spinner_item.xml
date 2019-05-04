@@ -17,16 +17,17 @@
             tools:text="Banana option to choose"/>
 
     <ImageButton
-            android:id="@+id/image_button_spinner_item_settings"
+            android:id="@+id/image_button_item_settings"
 
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
-            android:padding="5dp"
+            android:padding="10dp"
             android:src="@drawable/ic_settings_black_24dp"
-            android:background="@android:color/transparent"/>
+            android:scaleType="fitCenter"
+            android:background="?android:attr/selectableItemBackground"/>
     <!--android:onClick="onClickSettings"-->
 
 </LinearLayout>

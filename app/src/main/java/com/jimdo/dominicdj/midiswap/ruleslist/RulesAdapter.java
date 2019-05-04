@@ -18,19 +18,23 @@ public class RulesAdapter extends RecyclerView.Adapter<RulesViewHolder> {
 
     private List<RulesViewModel> models = new ArrayList<>();
     private AdapterView.OnItemSelectedListener onItemSelectedListener;
+    private AdapterView.OnClickListener onDeleteClickListener;
 
-    public RulesAdapter(final List<RulesViewModel> viewModels, AdapterView.OnItemSelectedListener onItemSelectedListener) {
+    public RulesAdapter(final List<RulesViewModel> viewModels,
+                        AdapterView.OnItemSelectedListener onItemSelectedListener,
+                        AdapterView.OnClickListener onDeleteClickListener) {
         if (viewModels != null) {
             this.models.addAll(viewModels); // use addAll, so that the list can't be modified outside of this adapter
         }
         this.onItemSelectedListener = onItemSelectedListener;
+        this.onDeleteClickListener = onDeleteClickListener;
     }
 
     @NonNull
     @Override
     public RulesViewHolder onCreateViewHolder(@NonNull final ViewGroup viewGroup, final int viewType) {
         final View view = LayoutInflater.from(viewGroup.getContext()).inflate(viewType, viewGroup, false);
-        return new RulesViewHolder(view, onItemSelectedListener);
+        return new RulesViewHolder(view, onItemSelectedListener, onDeleteClickListener);
     }
 
     @Override
@@ -60,6 +64,11 @@ public class RulesAdapter extends RecyclerView.Adapter<RulesViewHolder> {
             models.remove(removeIndex);
             notifyItemRemoved(removeIndex);
         }
+    }
+
+    public void removeItem(int removeIndex) {
+        models.remove(removeIndex);
+        notifyItemRemoved(removeIndex);
     }
 
 }

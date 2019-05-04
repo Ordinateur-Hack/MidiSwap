@@ -142,6 +142,10 @@ public class OperationRule {
         public static List<OperationRule> getOperationRules() {
             return operationRules;
         }
+
+        public static boolean deleteOperationRule(OperationRule operationRule) {
+            return operationRules.remove(operationRule);
+        }
     }
 
 }

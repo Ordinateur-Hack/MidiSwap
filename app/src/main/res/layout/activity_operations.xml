@@ -1,19 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools" xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:keepScreenOn="true">
+        android:layout_height="match_parent">
 
     <android.support.v7.widget.RecyclerView
             android:id="@+id/recycler_view_rules"
             android:layout_width="match_parent"
-            android:layout_height="300dp"/>
+            android:layout_height="250dp"/>
+
+    <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_add"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/recycler_view_rules"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/ic_add_white_24dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginRight="32dp"
+            android:layout_marginEnd="32dp"/>
+
+    <!--Line separator-->
+    <View
+            android:id="@+id/line_separator"
+            android:layout_below="@id/fab_add"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#868686"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"/>
 
     <GridLayout
             android:id="@+id/grid_layout_operations"
-            android:layout_below="@id/recycler_view_rules"
+            android:layout_below="@id/line_separator"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -133,7 +156,7 @@
 
     </LinearLayout>
 
-    <TextView
+   <!-- <TextView
             android:id="@+id/tv_midi_msg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -142,6 +165,6 @@
             android:padding="16dp"
             android:textSize="18sp"
             android:text="Midi Messages:\n
-I will develop this feature in the future so that the user sees the received MidiMessages here."/>
+I will develop this feature in the future so that the user sees the received MidiMessages here."/>-->
 
 </RelativeLayout>

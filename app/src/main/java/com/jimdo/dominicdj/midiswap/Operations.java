@@ -1,9 +1,14 @@
 package com.jimdo.dominicdj.midiswap;
 
-import android.content.*;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -22,27 +27,23 @@ import com.jimdo.dominicdj.midiswap.Utils.Conversion;
 import com.jimdo.dominicdj.midiswap.midimessage.MidiChannelController;
 import com.jimdo.dominicdj.midiswap.midimessage.MidiControllerBuilder;
 import com.jimdo.dominicdj.midiswap.operationrules.OperationRule;
-import com.jimdo.dominicdj.midiswap.ruleslist.RulesAdapter;
-import com.jimdo.dominicdj.midiswap.ruleslist.RulesViewModel;
-import com.jimdo.dominicdj.midiswap.ruleslist.SpinnerAdapter;
-import com.jimdo.dominicdj.midiswap.ruleslist.SpinnerListener;
+import com.jimdo.dominicdj.midiswap.ruleslist.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Operations extends AppCompatActivity {
 
-    private static final String TAG = Operations.class.getSimpleName();
-
     private EditText ifRecvMsgEditText;
     private EditText thenSendMsgEditText;
     private EditText customMsgEditText;
 
-    private OperationRule myOperationRule; // TODO: later we should ask for the current OperationRule in a RecyclerView
-    private OperationRule lastOperationRuleEditText;
-    private OperationRule lastOperationRuleSpinner;
+    private static RulesAdapter rulesAdapter;
+    private FloatingActionButton addFab;
 
     private boolean midiServiceStarted = false;
+
+    private static final String TAG = Operations.class.getSimpleName();
 
     private final BroadcastReceiverWithFlag usbReceiver = new BroadcastReceiverWithFlag() {
         @Override
@@ -72,16 +73,33 @@ public class Operations extends AppCompatActivity {
         rulesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         List<RulesViewModel> rulesViewModels = new ArrayList<>();
-        SpinnerListener spinnerListener = new SpinnerListener(this);
+        final SpinnerListener spinnerListener = new SpinnerListener(this);
         rulesViewModels.add(generateBasicViewModel(spinnerListener));
-        RulesAdapter rulesAdapter = new RulesAdapter(rulesViewModels, spinnerListener);
+
+        final RulesListener rulesListener = new RulesListener();
+        rulesAdapter = new RulesAdapter(rulesViewModels, spinnerListener, rulesListener);
         rulesRecyclerView.setAdapter(rulesAdapter);
+
+        // FloatingActionButton
+        addFab = findViewById(R.id.fab_add);
+        addFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rulesAdapter.addItem(generateBasicViewModel(spinnerListener));
+                // TODO: only for debug purpose
+                Toast.makeText(getApplicationContext(), "Added rule", Toast.LENGTH_SHORT).show();
+            }
+        });
+
 
         // =============================================================================================
         // TODO: Add new rulesViewModels with a button
-        // rulesAdapter.addItem(RulesViewModel newItem)
         // rulesAdapter.removeItem(RulesViewModel removeItem)
         // =============================================================================================
+    }
+
+    public static RulesAdapter getRulesAdapter() {
+        return rulesAdapter;
     }
 
     /**
@@ -99,7 +117,7 @@ public class Operations extends AppCompatActivity {
     }
 
     private SpinnerAdapter generateSpinnerAdapter(List<MidiChannelController> midiChannelControllers,
-                                                 View.OnClickListener settingsOnClickListener) {
+                                                  View.OnClickListener settingsOnClickListener) {
         return new SpinnerAdapter(this,
                 R.layout.spinner_item, R.id.tv_midi_controller_name,
                 android.R.layout.simple_spinner_dropdown_item, android.R.id.text1 /*text1 is the TextView

@@ -15,5 +15,7 @@
 
     <item type="id" name="TAG_MIDI_CHANNEL_CONTROLLER"/>
     <item type="id" name="TAG_SPINNER_OPERATION_RULE"/>
+    <item type="id" name="TAG_ADAPTER_POSITION"/>
+    <item type="id" name="TAG_SPINNER"/>
 
 </resources>

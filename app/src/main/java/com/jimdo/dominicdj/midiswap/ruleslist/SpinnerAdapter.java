@@ -61,7 +61,7 @@ public class SpinnerAdapter extends ArrayAdapter<MidiChannelController> {
                 convertView = LayoutInflater.from(parent.getContext()).inflate(resource, parent, false);
             }
             // Cache view fields into a new ViewHolder.
-            holder = new SpinnerViewHolder(convertView, parent, isDropDownView);
+            holder = new SpinnerViewHolder(convertView, isDropDownView);
             // Associate the holder with the view for later lookup.
             convertView.setTag(holder);
         } else {
@@ -70,7 +70,7 @@ public class SpinnerAdapter extends ArrayAdapter<MidiChannelController> {
         }
         MidiChannelController midiChannelController = getItem(position);
         if (midiChannelController != null) {
-            holder.bindData(convertView, midiChannelController);
+            holder.bindData(parent, midiChannelController);
         }
 
         return convertView;
@@ -82,18 +82,20 @@ public class SpinnerAdapter extends ArrayAdapter<MidiChannelController> {
         private TextView nameTextView; // name of MidiChannelController
         private ImageButton settingsButton; // 'settings'-icon
 
-        public SpinnerViewHolder(@NonNull View view, @NonNull ViewGroup parent, boolean isDropDownView) {
+        public SpinnerViewHolder(@NonNull View view, boolean isDropDownView) {
             if (isDropDownView) {
                 nameTextView = view.findViewById(textViewDropdownResourceId);
             } else {
                 nameTextView = view.findViewById(textViewResourceId);
-                settingsButton = view.findViewById(R.id.image_button_spinner_item_settings);
+                settingsButton = view.findViewById(R.id.image_button_item_settings);
             }
         }
 
-        private void bindData(@NonNull View convertView, @NonNull MidiChannelController midiChannelController) {
+        private void bindData(@NonNull ViewGroup parent, @NonNull MidiChannelController midiChannelController) {
             nameTextView.setText(midiChannelController.getName());
             if (settingsButton != null) {
+                Spinner spinner = (Spinner) parent;
+                settingsButton.setTag(R.id.TAG_SPINNER, spinner);
                 settingsButton.setTag(R.id.TAG_MIDI_CHANNEL_CONTROLLER, midiChannelController);
                 settingsButton.setOnClickListener(settingsOnClickListener);
             }

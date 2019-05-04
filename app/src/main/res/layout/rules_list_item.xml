@@ -5,7 +5,7 @@
         android:layout_height="wrap_content"
         android:padding="16dp"
         android:orientation="horizontal"
-        android:columnCount="2">
+        android:columnCount="5">
 
     <Spinner
             android:id="@+id/spinner_recv"
@@ -13,6 +13,15 @@
             android:layout_columnWeight="1"
             android:layout_gravity="fill">
     </Spinner>
+
+    <!--Line separator-->
+    <View
+            android:layout_width="1dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center_vertical"
+            android:background="#858585"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"/>
 
     <Spinner
             android:id="@+id/spinner_send"
@@ -23,8 +32,28 @@
 
     <!--Line separator-->
     <View
+            android:layout_width="2dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center_vertical"
+            android:background="#858585"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"/>
+
+    <ImageButton
+            android:id="@+id/image_button_rule_delete"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center_vertical"
+            android:padding="12dp"
+            android:src="@drawable/ic_delete_black_24dp"
+            android:scaleType="fitCenter"
+            android:background="?android:attr/selectableItemBackground"
+    />
+
+    <!--Line separator-->
+    <View
             android:layout_row="1"
-            android:layout_columnSpan="2"
+            android:layout_columnSpan="5"
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="#dadada"

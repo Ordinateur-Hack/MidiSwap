@@ -16,14 +16,9 @@ import com.jimdo.dominicdj.midiswap.operationrules.OperationRule;
 
 import java.util.List;
 
-import static com.jimdo.dominicdj.midiswap.midimessage.MidiConstants.MidiChannel;
-
 public class SpinnerListener implements AdapterView.OnItemSelectedListener, View.OnClickListener {
 
     private Context context;
-    // We have to make sure that onItemSelected is always called before onClick (users clicks on 'settings'-icon).
-    // Otherwise this reference to the spinner will be outdated!
-    private Spinner spinner;
 
     private static final String TAG = SpinnerListener.class.getSimpleName();
 
@@ -31,14 +26,16 @@ public class SpinnerListener implements AdapterView.OnItemSelectedListener, View
         this.context = context;
     }
 
+
     // ==========================================================================
-    // OnItemSelectedListener for spinner items
+    // OnItemSelectedListener for Spinner items
     // ==========================================================================
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         // the user has selected an item in the spinner
         Spinner spinner = (Spinner) parent;
-        this.spinner = spinner;
+        // We have to make sure that onItemSelected is always called before onClick (users clicks on 'settings'-icon).
+        // Otherwise this reference to the spinner will be outdated!
         Object tag = spinner.getTag(R.id.TAG_SPINNER_OPERATION_RULE);
         if (!(tag instanceof OperationRule)) {
             return;
@@ -70,7 +67,7 @@ public class SpinnerListener implements AdapterView.OnItemSelectedListener, View
 
 
     // ==========================================================================
-    // OnClickListener for 'settings'-button in spinner item
+    // OnClickListener for 'settings'-Button
     // ==========================================================================
     @Override
     public void onClick(View v) {
@@ -83,6 +80,14 @@ public class SpinnerListener implements AdapterView.OnItemSelectedListener, View
             return;
         }
         final ImageButton settingsButton = (ImageButton) v;
+
+        // Get Spinner.
+        Object spinnerCheck = settingsButton.getTag(R.id.TAG_SPINNER);
+        if (!(spinnerCheck instanceof Spinner)) {
+            Log.d(TAG, "The TAG_SPINNER in settingsButton is no Spinner.");
+            return;
+        }
+        Spinner spinner = (Spinner) spinnerCheck;
 
         // Get OperationRule from Spinner.
         Object operationRuleCheck = spinner.getTag(R.id.TAG_SPINNER_OPERATION_RULE);
@@ -99,8 +104,8 @@ public class SpinnerListener implements AdapterView.OnItemSelectedListener, View
             return;
         }
         final MidiChannelController midiChannelController = (MidiChannelController) midiChannelControllerCheck;
-        final List<MidiChannel> selectedMidiChannels = midiChannelController.getSelectedMidiChannels();
-        final List<MidiChannel> allAvailableMidiChannels = midiChannelController.getAllAvailableMidiChannels();
+        final List<MidiConstants.MidiChannel> selectedMidiChannels = midiChannelController.getSelectedMidiChannels();
+        final List<MidiConstants.MidiChannel> allAvailableMidiChannels = midiChannelController.getAllAvailableMidiChannels();
 
 
         // ==========================================================================
@@ -117,7 +122,7 @@ public class SpinnerListener implements AdapterView.OnItemSelectedListener, View
         final boolean[] checkedItems = new boolean[size];
 
         for (int i = 0; i < size; i++) {
-            MidiChannel midiChannel = allAvailableMidiChannels.get(i);
+            MidiConstants.MidiChannel midiChannel = allAvailableMidiChannels.get(i);
             items[i] = midiChannel.getReadableName();
             // Check an item in the list if it is selected according to the MidiChannelController.
             if (selectedMidiChannels.contains(midiChannel)) {
@@ -177,12 +182,13 @@ public class SpinnerListener implements AdapterView.OnItemSelectedListener, View
                         selectedMidiChannels, checkedItems);
             }
         });
+
     }
 
     private void updateCheckedItemsAndOperationRule(OperationRule operationRule,
                                                     MidiChannelController midiChannelController,
-                                                    List<MidiChannel> allAvailableMidiChannels,
-                                                    List<MidiChannel> selectedMidiChannels,
+                                                    List<MidiConstants.MidiChannel> allAvailableMidiChannels,
+                                                    List<MidiConstants.MidiChannel> selectedMidiChannels,
                                                     boolean[] checkedItems) {
         // Go through every item in the list and check if is newly checked or unchecked.
         for (int i = 0; i < allAvailableMidiChannels.size(); i++) {
@@ -190,7 +196,7 @@ public class SpinnerListener implements AdapterView.OnItemSelectedListener, View
             // the user can only select as many items as displayed and we filled our
             // dialog list with the alternativeMidiChannels-list.
             // However, for safety reasons, we do this nevertheless.
-            MidiChannel midiChannelToDiscuss = allAvailableMidiChannels.get(i);
+            MidiConstants.MidiChannel midiChannelToDiscuss = allAvailableMidiChannels.get(i);
             boolean wasChecked = selectedMidiChannels.contains(midiChannelToDiscuss);
             boolean isChecked = checkedItems[i];
 
